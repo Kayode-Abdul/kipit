@@ -17,7 +17,7 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        env('APP_CENTRAL_DOMAIN', null),
+        env('APP_CENTRAL_DOMAIN', 'localhost'),
     ],
 
     'admin_domains' => [
@@ -50,7 +50,7 @@ return [
          * Connection used as a "template" for the dynamically created tenant database connection.
          * Note: don't name your template connection tenant. That name is reserved by package.
          */
-        'template_tenant_connection' => null,
+        'template_tenant_connection' => 'sqlite',
 
         /**
          * Tenant database names are created like this:

@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('abouts')) {
+        $isDesktop = \App\Helpers\DesktopHelper::isDesktopApp() || config('database.default') === 'sqlite';
+        if (Schema::hasTable('abouts') && !$isDesktop) {
             Artisan::call('tenants:run app:move-about-to-tenant');
         }
-        if (config('tenancy.central_domains')[0] != null) {
+        if (!empty(config('tenancy.central_domains'))) {
             Schema::dropIfExists('abouts');
         }
     }

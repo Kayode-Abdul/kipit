@@ -32,6 +32,11 @@ class RouteServiceProvider extends ServiceProvider
             $this->mapWebRoutes();
 
             $this->mapApiRoutes();
+
+            if (file_exists(base_path('routes/desktop.php'))) {
+                Route::middleware('web')
+                    ->group(base_path('routes/desktop.php'));
+            }
         });
     }
 

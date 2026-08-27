@@ -36,11 +36,9 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\CheckTenantActivation::class,
 ])
     ->group(function () {
-        Route::get('/', function () {
-            return redirect()->to('/member');
-        });
         Route::get('/member/purchasing-report/generate', PurchasingReportController::class)
             ->name('purchasing-report.generate');
         Route::get('/member/selling-report/generate', SellingReportController::class)
@@ -60,6 +58,7 @@ Route::middleware([
     'api',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\CheckTenantActivation::class,
 ])
     ->prefix('api')
     ->group(function () {
@@ -72,6 +71,9 @@ Route::middleware([
         Route::group(['prefix' => 'auth'], function () {
             Route::post('/login', [AuthenticatedSessionController::class, 'store'])
                 ->name('login');
+
+            Route::post('/desktop-authenticate', [\App\Http\Controllers\Api\Tenants\DesktopProvisionController::class, 'authenticate'])
+                ->name('desktop.authenticate');
 
             Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
                 ->middleware('guest')
@@ -103,6 +105,20 @@ Route::middleware([
 
             Route::group(['prefix' => 'temp'], function () {
                 Route::post('upload', UploadController::class);
+            });
+
+            Route::group(['prefix' => 'subscriptions'], function () {
+                Route::get('/plans', [\App\Http\Controllers\Api\Tenants\SubscriptionController::class, 'index']);
+                Route::post('/checkout', [\App\Http\Controllers\Api\Tenants\SubscriptionController::class, 'checkout']);
+            });
+
+            Route::group(['prefix' => 'sync'], function () {
+                Route::post('/push', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'push']);
+                Route::get('/pull', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'pull']);
+            });
+
+            Route::group(['prefix' => 'desktop'], function () {
+                Route::get('/provision', [\App\Http\Controllers\Api\Tenants\DesktopProvisionController::class, 'provision']);
             });
 
             Route::group(['prefix' => 'master'], function () {

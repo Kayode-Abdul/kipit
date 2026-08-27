@@ -16,3 +16,6 @@ Route::get('/test', function ()
     ]);
 });
 
+Route::post('/webhooks/paystack', [\App\Http\Controllers\Api\PaystackWebhookController::class, 'handle'])
+    ->name('webhooks.paystack');
+

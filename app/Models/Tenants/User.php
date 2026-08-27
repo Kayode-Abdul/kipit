@@ -2,6 +2,8 @@
 
 namespace App\Models\Tenants;
 
+use App\Models\Tenants\Traits\Syncable;
+
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasName;
@@ -23,6 +25,8 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasName
 {
+    use Syncable;
+
     use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     /**

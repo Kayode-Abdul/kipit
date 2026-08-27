@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
         $password = bcrypt('password');
         if (Schema::hasTable('tenant')) {
             $dbName = DB::connection()->getDatabaseName();
-            $tenant = Tenant::find(Str::after($dbName, 'lakasir_')) ?? tenant();
+            $tenant = Tenant::find(Str::after($dbName, 'kipit_')) ?? tenant();
             $email = $tenant->user->email;
             $password = $tenant->user->password;
         }

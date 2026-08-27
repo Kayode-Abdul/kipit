@@ -2,6 +2,8 @@
 
 namespace App\Models\Tenants;
 
+use App\Models\Tenants\Traits\Syncable;
+
 use App\Traits\Suppliers\HasSupplierForm;
 use App\Traits\Suppliers\HasSupplierTable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Supplier extends Model
 {
+    use Syncable;
+
     use HasFactory, HasSupplierForm, HasSupplierTable, SoftDeletes;
 
     protected $guarded = ['id'];

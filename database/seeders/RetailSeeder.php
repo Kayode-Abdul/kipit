@@ -25,7 +25,7 @@ class RetailSeeder extends Seeder
 
             return;
         }
-        $contactEmail = 'lakasirapp@gmail.com';
+        $contactEmail = 'support@kipit.com';
         $this->command->warn("Contact the Lakasir owner to get this retail product: mailto://$contactEmail");
 
     }

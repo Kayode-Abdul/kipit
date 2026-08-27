@@ -17,7 +17,7 @@ class RegisterTenant
         /** @var Tenant */
         $tenant = Tenant::create([
             'id' => $name,
-            'tenancy_db_name' => 'lakasir_'.$name,
+            'tenancy_db_name' => 'kipit_'.$name,
             'tenancy_email' => $data['email'],
         ]);
 

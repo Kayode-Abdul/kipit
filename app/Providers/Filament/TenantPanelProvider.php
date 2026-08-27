@@ -88,11 +88,18 @@ class TenantPanelProvider extends PanelProvider
         $panel = $this->configurePanel($panel);
 
         $url = request()->getHost();
-        if ($this->isCentralDomainConfigured()) {
+        if (\App\Helpers\DesktopHelper::isDesktopApp()) {
+            $this->initializeDefaultPanel($panel);
+        } elseif ($this->isCentralDomainConfigured()) {
             $this->initializeTenantPanel($panel, $url);
         } else {
             $this->initializeDefaultPanel($panel);
         }
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::HEAD_START,
+            fn () => '<script>window.JS_MD5_NO_NODE_JS = true;</script>'
+        );
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::HEAD_END,
@@ -102,6 +109,11 @@ class TenantPanelProvider extends PanelProvider
         FilamentView::registerRenderHook(
             PanelsRenderHook::GLOBAL_SEARCH_AFTER,
             fn () => view('version-indicator')
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_START,
+            fn () => view('trial-indicator')
         );
 
         if (app()->environment('demo')) {
@@ -210,6 +222,7 @@ class TenantPanelProvider extends PanelProvider
     private function getMiddleware(): array
     {
         return [
+            \App\Http\Middleware\DesktopSetupMiddleware::class,
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
@@ -220,6 +233,7 @@ class TenantPanelProvider extends PanelProvider
             DisableBladeIconComponents::class,
             DispatchServingFilamentEvent::class,
             LocalizationMiddleware::class,
+            \App\Http\Middleware\CheckTenantActivation::class,
         ];
     }
 

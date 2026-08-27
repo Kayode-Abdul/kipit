@@ -14,7 +14,7 @@ services:
             - '/var/www/html/vendor'
             - '/var/www/html/node_modules'
         networks:
-            - lakasir
+            - kipit
         depends_on:
             mysql:
                 condition: service_healthy
@@ -23,8 +23,8 @@ services:
         environment:
             DB_HOST: mysql
             DB_PORT: 3306
-            DB_DATABASE: ${DB_DATABASE:-lakasir}
-            DB_USERNAME: ${DB_USERNAME:-lakasir}
+            DB_DATABASE: ${DB_DATABASE:-kipit}
+            DB_USERNAME: ${DB_USERNAME:-kipit}
             DB_PASSWORD: ${DB_PASSWORD:-secret}
             REDIS_HOST: redis
             REDIS_PORT: 6379
@@ -42,13 +42,13 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
             MYSQL_ROOT_HOST: '%'
-            MYSQL_DATABASE: ${DB_DATABASE:-lakasir}
-            MYSQL_USER: ${DB_APP_USER:-${DB_USERNAME:-lakasir}}
+            MYSQL_DATABASE: ${DB_DATABASE:-kipit}
+            MYSQL_USER: ${DB_APP_USER:-${DB_USERNAME:-kipit}}
             MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
         volumes:
-            - lakasir-mysql:/var/lib/mysql
+            - kipit-mysql:/var/lib/mysql
         networks:
-            - lakasir
+            - kipit
         healthcheck:
             test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-p${DB_PASSWORD:-secret}']
             retries: 3
@@ -61,9 +61,9 @@ services:
         ports:
             - '${FORWARD_REDIS_PORT:-6380}:6379'
         volumes:
-            - lakasir-redis:/data
+            - kipit-redis:/data
         networks:
-            - lakasir
+            - kipit
         healthcheck:
             test: ['CMD', 'redis-cli', 'ping']
             retries: 3
@@ -77,14 +77,14 @@ services:
             - '${FORWARD_MAILPIT_PORT:-1026}:1025'
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8026}:8025'
         networks:
-            - lakasir
+            - kipit
 
 networks:
-    lakasir:
+    kipit:
         driver: bridge
 
 volumes:
-    lakasir-mysql:
+    kipit-mysql:
         driver: local
-    lakasir-redis:
+    kipit-redis:
         driver: local

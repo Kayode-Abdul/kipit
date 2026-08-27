@@ -1,0 +1,695 @@
+/* ============================================
+   Kipit Desktop — Native App Styles
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --kipit-primary: #FF6600;
+  --kipit-primary-light: #FF8533;
+  --kipit-primary-dark: #CC5200;
+  --kipit-bg-dark: #0f0f13;
+  --kipit-bg-card: #1a1a23;
+  --kipit-bg-card-hover: #22222e;
+  --kipit-bg-input: #14141b;
+  --kipit-border: #2a2a38;
+  --kipit-text-primary: #f0f0f5;
+  --kipit-text-secondary: #8888a0;
+  --kipit-text-muted: #55556a;
+  --kipit-success: #22c55e;
+  --kipit-error: #ef4444;
+  --kipit-warning: #f59e0b;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body.desktop-app {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--kipit-bg-dark);
+  color: var(--kipit-text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Splash Screen
+   ============================================ */
+
+.splash-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, var(--kipit-bg-dark) 70%);
+  position: relative;
+}
+
+.splash-logo {
+  width: 120px;
+  height: 120px;
+  animation: splashFadeIn 0.8s ease-out, splashPulse 2s ease-in-out infinite 0.8s;
+}
+
+.splash-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  letter-spacing: -0.02em;
+  animation: splashFadeIn 0.8s ease-out 0.3s both;
+}
+
+.splash-title span {
+  color: var(--kipit-primary);
+}
+
+.splash-loader {
+  margin-top: 3rem;
+  width: 200px;
+  height: 3px;
+  background: var(--kipit-border);
+  border-radius: 3px;
+  overflow: hidden;
+  animation: splashFadeIn 0.5s ease-out 0.6s both;
+}
+
+.splash-loader-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--kipit-primary), var(--kipit-primary-light));
+  border-radius: 3px;
+  animation: splashLoading 2.5s ease-in-out forwards 0.8s;
+}
+
+.splash-version {
+  position: absolute;
+  bottom: 2rem;
+  font-size: 0.8rem;
+  color: var(--kipit-text-muted);
+  animation: splashFadeIn 0.5s ease-out 1s both;
+}
+
+@keyframes splashFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes splashLoading {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* ============================================
+   Welcome Carousel
+   ============================================ */
+
+.welcome-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at top, #1a1a2e 0%, var(--kipit-bg-dark) 60%);
+}
+
+.welcome-carousel {
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-slides {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcome-slide {
+  min-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.welcome-slide-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--kipit-primary), var(--kipit-primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(255, 102, 0, 0.25);
+}
+
+.welcome-slide-icon svg {
+  width: 40px;
+  height: 40px;
+  color: white;
+}
+
+.welcome-slide h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.welcome-slide p {
+  font-size: 1.05rem;
+  color: var(--kipit-text-secondary);
+  line-height: 1.7;
+  max-width: 420px;
+}
+
+.welcome-dots {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+
+.welcome-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--kipit-border);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.welcome-dot.active {
+  background: var(--kipit-primary);
+  width: 28px;
+  border-radius: 5px;
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  width: 100%;
+  max-width: 560px;
+  justify-content: center;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 2rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  gap: 0.5rem;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--kipit-primary), var(--kipit-primary-dark));
+  color: white;
+  box-shadow: 0 4px 16px rgba(255, 102, 0, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(255, 102, 0, 0.4);
+}
+
+.btn-secondary {
+  background: var(--kipit-bg-card);
+  color: var(--kipit-text-primary);
+  border: 1px solid var(--kipit-border);
+}
+
+.btn-secondary:hover {
+  background: var(--kipit-bg-card-hover);
+  border-color: var(--kipit-text-muted);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--kipit-text-secondary);
+}
+
+.btn-ghost:hover {
+  color: var(--kipit-text-primary);
+}
+
+.btn-lg {
+  padding: 1rem 2.5rem;
+  font-size: 1.05rem;
+  border-radius: 14px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ============================================
+   Setup Wizard
+   ============================================ */
+
+.setup-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at bottom right, #1a1a2e 0%, var(--kipit-bg-dark) 60%);
+}
+
+.setup-card {
+  background: var(--kipit-bg-card);
+  border: 1px solid var(--kipit-border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.4);
+  animation: cardFadeIn 0.4s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.setup-card-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.setup-card-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.setup-card-header p {
+  color: var(--kipit-text-secondary);
+  font-size: 0.95rem;
+}
+
+.setup-steps {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.setup-step {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--kipit-border);
+  transition: background 0.3s ease;
+}
+
+.setup-step.active {
+  background: var(--kipit-primary);
+}
+
+.setup-step.completed {
+  background: var(--kipit-success);
+}
+
+/* ============================================
+   Form Elements
+   ============================================ */
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--kipit-text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: var(--kipit-bg-input);
+  border: 1px solid var(--kipit-border);
+  border-radius: 10px;
+  color: var(--kipit-text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--kipit-primary);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+}
+
+.form-input::placeholder {
+  color: var(--kipit-text-muted);
+}
+
+.form-input.error {
+  border-color: var(--kipit-error);
+}
+
+.form-error {
+  color: var(--kipit-error);
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+
+.progress-container {
+  margin: 1.5rem 0;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--kipit-bg-input);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--kipit-primary), var(--kipit-success));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--kipit-text-secondary);
+}
+
+.progress-status {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--kipit-text-secondary);
+  font-size: 0.9rem;
+}
+
+.progress-status .table-name {
+  color: var(--kipit-primary);
+  font-weight: 600;
+}
+
+/* ============================================
+   Status Indicators
+   ============================================ */
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-dot.online {
+  background: var(--kipit-success);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.status-dot.offline {
+  background: var(--kipit-error);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--kipit-success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.status-badge.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--kipit-error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================
+   Desktop Login
+   ============================================ */
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at top left, #1a1a2e 0%, var(--kipit-bg-dark) 60%);
+}
+
+.login-card {
+  background: var(--kipit-bg-card);
+  border: 1px solid var(--kipit-border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.4);
+  animation: cardFadeIn 0.4s ease-out;
+}
+
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.login-logo img {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+}
+
+.login-logo h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.login-logo p {
+  color: var(--kipit-text-muted);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.login-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--kipit-text-secondary);
+}
+
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-remember input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--kipit-primary);
+}
+
+.login-remember label {
+  font-size: 0.85rem;
+  color: var(--kipit-text-secondary);
+  cursor: pointer;
+}
+
+/* ============================================
+   Success State
+   ============================================ */
+
+.success-state {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: successPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.success-icon svg {
+  width: 40px;
+  height: 40px;
+  color: var(--kipit-success);
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+.success-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.success-stat {
+  background: var(--kipit-bg-input);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.success-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--kipit-primary);
+}
+
+.success-stat-label {
+  font-size: 0.75rem;
+  color: var(--kipit-text-muted);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   Alert Messages
+   ============================================ */
+
+.alert {
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--kipit-error);
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: var(--kipit-success);
+}
+
+.alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--kipit-warning);
+}
+
+/* ============================================
+   Spinner
+   ============================================ */
+
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+
+.text-center { text-align: center; }
+.text-muted { color: var(--kipit-text-muted); }
+.text-secondary { color: var(--kipit-text-secondary); }
+.text-primary { color: var(--kipit-primary); }
+.text-success { color: var(--kipit-success); }
+.text-sm { font-size: 0.85rem; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.gap-1 { gap: 0.5rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }

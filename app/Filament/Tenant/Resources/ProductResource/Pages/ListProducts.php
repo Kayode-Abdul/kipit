@@ -20,32 +20,10 @@ class ListProducts extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
-            Action::make('import-product')
-                ->label(__('Import product'))
+            Actions\ImportAction::make()
+                ->importer(\App\Filament\Tenant\Imports\ProductImporter::class)
                 ->color('gray')
-                ->visible(feature(ProductImport::class))
-                ->form([
-                    FileUpload::make('attachment')
-                        ->disk(config('filesystems.upload_disk'))
-                        ->acceptedFileTypes(['application/vnd.ms-excel', 'text/csv']),
-                ])->action(function (array $data) {
-                    $uploadDisk = config('filesystems.upload_disk');
-                    $filePath = $data['attachment'];
-                    $driver = config('filesystems.disks.' . $uploadDisk . '.driver');
-
-                    if ($driver === 'local' || $driver === 'public') {
-                        $fullPath = Storage::disk($uploadDisk)->path($filePath);
-                        Excel::import(new ImportsProductImport, $fullPath);
-                    } else {
-                        $tmpPath = tempnam(sys_get_temp_dir(), 'lakasir_import_');
-                        try {
-                            file_put_contents($tmpPath, Storage::disk($uploadDisk)->get($filePath));
-                            Excel::import(new ImportsProductImport, $tmpPath);
-                        } finally {
-                            @unlink($tmpPath);
-                        }
-                    }
-                }),
+                ->visible(feature(ProductImport::class)),
         ];
     }
 

@@ -34,7 +34,7 @@
             <span class="text-gray-500">Total Price</span>
             </p>
             <p>
-              <span class="text-lakasir-primary text-sm font-normal">Rp. </span>
+              <span class="text-kipit-primary text-sm font-normal">Rp. </span>
               <span class="font-semibold" x-text="moneyFormat(cartItem.price)"></span>
             </p>
           </div>
@@ -99,7 +99,7 @@
 
       <button
         @click="continueToPayment"
-        class="w-full mt-6 px-4 py-6 bg-lakasir-primary text-white rounded-full font-medium"
+        class="w-full mt-6 px-4 py-6 bg-kipit-primary text-white rounded-full font-medium"
         >
         Continue Payment
       </button>

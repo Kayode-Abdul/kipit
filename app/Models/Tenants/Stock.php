@@ -2,6 +2,8 @@
 
 namespace App\Models\Tenants;
 
+use App\Models\Tenants\Traits\Syncable;
+
 use App\Features\ProductExpired;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +23,7 @@ use Laravel\Pennant\Feature;
  */
 class Stock extends Model
 {
-    use HasFactory;
+    use HasFactory, Syncable;
 
     protected $guarded = ['id'];
 

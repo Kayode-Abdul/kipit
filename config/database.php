@@ -10,12 +10,22 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify which of the database connections below you wish
-    | to use as your default connection for all database work. Of course
-    | you may use many connections at once using the Database library.
+    | to use as your default connection for database operations. This is
+    | the connection which will be utilized unless another connection
+    | is explicitly specified when you execute a query / statement.
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => (function () {
+        $isNative = false;
+        if (getenv('NATIVEPHP_RUNNING') || env('NATIVEPHP_RUNNING')) {
+            $isNative = true;
+        }
+        if (isset($_SERVER['HTTP_USER_AGENT']) && (strpos($_SERVER['HTTP_USER_AGENT'], 'Electron') !== false || strpos($_SERVER['HTTP_USER_AGENT'], 'kipit') !== false)) {
+            $isNative = true;
+        }
+        return $isNative ? 'sqlite' : env('DB_CONNECTION', 'sqlite');
+    })(),
 
     /*
     |--------------------------------------------------------------------------
@@ -38,7 +48,54 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => (function () {
+                $isNative = false;
+                if (getenv('NATIVEPHP_RUNNING') || env('NATIVEPHP_RUNNING')) {
+                    $isNative = true;
+                }
+                if (isset($_SERVER['HTTP_USER_AGENT']) && (strpos($_SERVER['HTTP_USER_AGENT'], 'Electron') !== false || strpos($_SERVER['HTTP_USER_AGENT'], 'kipit') !== false)) {
+                    $isNative = true;
+                }
+                
+                if ($isNative) {
+                    $dbPath = getenv('NATIVEPHP_DATABASE_PATH') ?: (getenv('DB_DATABASE') ?: null);
+                    if ($dbPath && $dbPath !== '' && $dbPath[0] === '/') {
+                        $dir = dirname($dbPath);
+                        if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+                        if (!file_exists($dbPath)) { @touch($dbPath); }
+                        return $dbPath;
+                    }
+                    
+                    $home = getenv('HOME');
+                    if (!$home || $home === '') {
+                        $home = $_SERVER['HOME'] ?? '';
+                    }
+                    if (!$home || $home === '') {
+                        if (function_exists('posix_getpwuid') && function_exists('posix_geteuid')) {
+                            $info = posix_getpwuid(posix_geteuid());
+                            $home = $info['dir'] ?? '';
+                        }
+                    }
+                    if (!$home || $home === '') {
+                        $home = '/tmp';
+                    }
+                    
+                    if (PHP_OS_FAMILY === 'Darwin') {
+                        $dbPath = $home . '/Library/Application Support/kipit/database.sqlite';
+                    } elseif (PHP_OS_FAMILY === 'Windows') {
+                        $appdata = getenv('APPDATA') ?: ($home . '\\AppData\\Roaming');
+                        $dbPath = $appdata . '\\kipit\\database.sqlite';
+                    } else {
+                        $dbPath = $home . '/.config/kipit/database.sqlite';
+                    }
+                    
+                    $dir = dirname($dbPath);
+                    if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+                    if (!file_exists($dbPath)) { @touch($dbPath); }
+                    return $dbPath;
+                }
+                return env('DB_DATABASE', database_path('database.sqlite'));
+            })(),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],

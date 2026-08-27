@@ -1,8 +1,15 @@
 {
+    "name": "kipit",
+    "version": "1.0.0",
+    "description": "Kipit Desktop Client",
+    "author": "Kipit",
     "type": "module",
+    "main": "main.cjs",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "desktop:start": "electron .",
+        "desktop:build": "electron-builder"
     },
     "dependencies": {
         "cookie": "^0.7.0",
@@ -13,10 +20,57 @@
         "@tailwindcss/typography": "^0.5.13",
         "alpinejs": "^3.4.2",
         "autoprefixer": "^10.4.19",
+        "concurrently": "^10.0.5",
+        "electron": "^43.4.0",
+        "electron-builder": "^26.15.3",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.5.13",
         "postcss-nesting": "^12.1.2",
         "tailwindcss": "^3.4.3",
         "vite": "^6.4.2"
+    },
+    "build": {
+        "directories": {
+            "output": "public/downloads/desktop"
+        },
+        "generateUpdatesFilesForAllChannels": false,
+        "appId": "com.kipit.pos",
+        "artifactName": "kipit-${version}-${os}.${ext}",
+        "asar": false,
+        "productName": "Kipit",
+        "icon": "build/icon.png",
+        "files": [
+            "main.cjs",
+            "server.php",
+            "artisan",
+            "app/**/*",
+            "bootstrap/**/*",
+            "config/**/*",
+            "database/**/*",
+            "public/**/*",
+            "!public/downloads/**/*",
+            "!public/hot",
+            "resources/**/*",
+            "routes/**/*",
+            "storage/**/*",
+            "vendor/**/*",
+            ".env",
+            "composer.json",
+            "composer.lock"
+        ],
+        "mac": {
+            "category": "public.app-category.business",
+            "icon": "build/icon.icns",
+            "target": [
+                "zip"
+            ]
+        },
+        "win": {
+            "icon": "build/icon.ico",
+            "target": [
+                "nsis",
+                "zip"
+            ]
+        }
     }
 }

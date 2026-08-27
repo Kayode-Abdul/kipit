@@ -17,7 +17,7 @@ class TenantPolicy
      */
     public function view(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -25,7 +25,7 @@ class TenantPolicy
      */
     public function create(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -33,7 +33,7 @@ class TenantPolicy
      */
     public function update(): bool
     {
-        return false;
+        return true;
     }
 
     /**

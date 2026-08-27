@@ -2,6 +2,8 @@
 
 namespace App\Models\Tenants;
 
+use App\Models\Tenants\Traits\Syncable;
+
 use App\Traits\UseTimezoneAwareQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -14,9 +16,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Selling extends Model
 {
+    use Syncable;
+    use \App\Models\Tenants\Traits\TamperProof;
+
     use HasFactory, UseTimezoneAwareQuery;
 
     protected $guarded = ['friend_price'];
+
+    protected $tamperProtected = ['total_price', 'total_cost', 'tax_price', 'discount_price', 'is_paid'];
 
     protected $appends = [
         'grand_total_price',

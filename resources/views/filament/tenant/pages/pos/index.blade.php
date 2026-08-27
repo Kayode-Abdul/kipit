@@ -111,7 +111,7 @@
               <div class="mt-2">
                 <p class="text-sm text-gray-500">Total Price</p>
                 <p class="text-gray-900 font-semibold">
-                  <span class="text-lakasir-primary text-sm font-normal" x-text="`Rp. `"></span>
+                  <span class="text-kipit-primary text-sm font-normal" x-text="`Rp. `"></span>
                   <span x-text="moneyFormat(item.selling_price)"></span>
                 </p>
               </div>
@@ -135,7 +135,7 @@
     <template x-if="cartTotal > 0">
       <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t px-4 py-4"
         @click="proceedToCheckout">
-        <div class="max-w-4xl mx-auto bg-lakasir-primary rounded-full">
+        <div class="max-w-4xl mx-auto bg-kipit-primary rounded-full">
           <div class="flex items-center justify-between px-3 py-2.5 text-white">
             <div class="grid items-center ml-3">
               <p class="font-medium" x-text="`${cartItemCount} Items`"></p>
@@ -161,8 +161,8 @@
 
 @script()
 <script>
-  window.lakasirCurrency = @js($currency);
-  window.lakasirLocale = @js($locale);
+  window.kipitCurrency = @js($currency);
+  window.kipitLocale = @js($locale);
   Alpine.data('pos', () => {
     return {
       items: @json($menuItems),

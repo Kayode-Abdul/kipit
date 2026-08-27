@@ -45,12 +45,45 @@ if (! function_exists('isMultiTenant')) {
 }
 
 if (! function_exists('price_format')) {
-    function price_format(float $price): string
+    function price_format(float $price, ?string $currencyCode = null): string
     {
-        return Number::currency(
+        $currency = $currencyCode ?? Setting::get('currency', 'IDR');
+        $locale = Profile::get()->locale ?? 'en';
+        
+        $formatted = Number::currency(
             number: $price,
-            in: Setting::get('currency', 'IDR'),
-            locale: Profile::get()->locale ?? 'en'
+            in: $currency,
+            locale: $locale
         );
+
+        if (class_exists(\Symfony\Component\Intl\Currencies::class)) {
+            try {
+                $symbol = \Symfony\Component\Intl\Currencies::getSymbol($currency, $locale);
+                
+                // If Intl returns the 3-letter code (like IDR), try to fallback to a known native symbol
+                if ($symbol === $currency) {
+                    $fallbackSymbols = [
+                        'IDR' => 'Rp',
+                        'NGN' => '₦',
+                        'USD' => '$',
+                        'EUR' => '€',
+                        'GBP' => '£',
+                        'JPY' => '¥',
+                    ];
+                    $symbol = $fallbackSymbols[$currency] ?? $symbol;
+                }
+
+                // Replace the currency abbreviation and any trailing spaces (regular or non-breaking) with the symbol
+                if (str_contains($formatted, $currency)) {
+                    $formatted = str_replace($currency . ' ', $symbol, $formatted);
+                    $formatted = str_replace($currency . "\xc2\xa0", $symbol, $formatted);
+                    $formatted = str_replace($currency, $symbol, $formatted);
+                }
+            } catch (\Exception $e) {
+                // If symfony/intl fails for an unknown currency, fallback to default
+            }
+        }
+
+        return $formatted;
     }
 }

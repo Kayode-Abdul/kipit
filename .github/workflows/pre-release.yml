@@ -16,8 +16,8 @@ jobs:
         ports:
           - 3306:3306
         env:
-          MYSQL_DATABASE: lakasir
-          MYSQL_USER: lakasir
+          MYSQL_DATABASE: kipit
+          MYSQL_USER: kipit
           MYSQL_PASSWORD: secret
           MYSQL_ROOT_PASSWORD: root
         options: >-
@@ -44,8 +44,8 @@ jobs:
           echo "DB_CONNECTION=mysql" >> .env
           echo "DB_HOST=127.0.0.1" >> .env
           echo "DB_PORT=3306" >> .env
-          echo "DB_DATABASE=lakasir" >> .env
-          echo "DB_USERNAME=lakasir" >> .env
+          echo "DB_DATABASE=kipit" >> .env
+          echo "DB_USERNAME=kipit" >> .env
           echo "DB_PASSWORD=secret" >> .env
           echo "APP_KEY=base64:$(php -r 'echo base64_encode(random_bytes(32));')" >> .env
 
@@ -103,7 +103,7 @@ jobs:
           cp .env.example release/.env.example
 
           cd release
-          zip -r ../lakasir-${VERSION}.zip ./*
+          zip -r ../kipit-${VERSION}.zip ./*
         shell: bash
 
       - name: 🚀 Create GitHub Pre-release with ZIP
@@ -113,6 +113,6 @@ jobs:
           tag_name: ${{ github.ref_name }}
           body: ${{ steps.generate_notes.outputs.result }}
           prerelease: true
-          files: lakasir-${{ github.ref_name }}.zip
+          files: kipit-${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

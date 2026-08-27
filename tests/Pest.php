@@ -48,7 +48,7 @@ expect()->extend('toBeOne', function () {
 
 function mockTenant(): Tenant
 {
-    DB::statement('DROP DATABASE IF EXISTS lakasir_toko_testing');
+    DB::statement('DROP DATABASE IF EXISTS kipit_toko_testing');
     Tenant::where('id', 'toko_testing')->delete();
     $data = [
         'name' => 'toko_testing',

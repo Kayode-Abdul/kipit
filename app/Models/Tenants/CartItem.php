@@ -2,6 +2,8 @@
 
 namespace App\Models\Tenants;
 
+use App\Models\Tenants\Traits\Syncable;
+
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -16,7 +18,7 @@ use Illuminate\Support\Str;
  */
 class CartItem extends Model
 {
-    use HasFactory;
+    use HasFactory, Syncable;
 
     protected $fillable = [
         'qty',

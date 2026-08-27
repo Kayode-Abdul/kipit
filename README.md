@@ -1,101 +1,78 @@
 <div align="center">
+  <h1>Kipit POS</h1>
 
-  <img src="https://lakasir.com/assets/logo/image.png" alt="logo" width="200" height="auto" />
-  <h1>Lakasir Web App</h1>
+  <p> Kipit is a Point of Sale (POS) application built using Laravel for the API, the Filament admin panel for the web application, and Flutter for the mobile application. </p>
 
-  <p> Lakasir is a Point of Sale (POS) application built using Laravel for the API, the Filament admin panel for the web application, and Flutter for the mobile application. </p>
-  
+  <p>
+    <a href="#">
+      <img src="https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel">
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white" alt="Flutter">
+    </a>
+  </p>
 </div>
 
-## Requirements
-* php 8.4
-* mysql 5.7 or higher
-* php-ext.* base on laravel extenstion requirement
+---
 
+## 📋 Table of Contents
+
+- [About](#about)
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+
+## About
+
+Kipit is a free, open-source POS application available for both web and Android. It helps you easily track daily profits and manage your store's inventory with a complete and user-friendly feature set.
 
 ## Features
-- **Role Management**: Define roles and permissions for users.
-- **Transaction Management**: Handle sales transactions seamlessly.
-- **Product Management**: Manage your inventory and products effectively.
-- **Unit Price**: The product will have a different price base on the basic unit.
-- **Discount**: You can sell the product with a discount per item or global discount.
-- **Purchasing**: Manage purchase orders and supplier relationships.
-- **Stock Opname**: Conduct stock taking and inventory audits to ensure accuracy.
-- **Receivable Management**: Track and manage receivables owed by and to your business.
-- **Payment Method Management**: Define and manage various payment methods.
-- **Voucher Management**: Create, distribute, and track the usage of vouchers.
-- **Reporting**: Generate reports for insights into sales and performance.
-- **Simple Accounting**: Basic accounting features to track income, expenses, and profits.
-- **Real-time Dashboard**: Monitor business metrics and performance in real-time.
-- **Web usb direct printing**: support the thermal printer using usb feature from browser (Chrome, Firefox)
-- **Barcode support**: we can use the barcode on stock opname, purchasing, and POS feature
 
-## Screenshots
+- 🛒 Product Management
+- 💰 Sales & Transaction Recording
+- 📊 Daily Profit Reports
+- 👥 Multi-tenant Support
+- 📱 Mobile App (Flutter)
+- 🖨️ Receipt Printing (USB ESC/POS)
+- 📦 Product Import/Export
+- 🔐 Role-based Access Control
 
-<div style="display:inline-block" align="center">
-  <img src="./readme/Screenshot/cashier-menu.png" alt="Product Detail" width="400" />
-  &emsp;
-  <img src="./readme/Screenshot/product-detail.png" alt="Product Detail" width="400"/>  
-</div>
-<!-- ![Lakasir Screenshot](./readme/Screenshot/product-detail.png) -->
+## Getting Started
 
-## Technologies Used
-* **Backend**: [Laravel](https://laravel.com)
-* **Frontend** (Web): [Filament Admin Panel](https://filamentphp.com)
-* **Frontend** (Mobile): [Flutter](https://flutter.github.io)
+### Prerequisites
 
-## Installation
-1. Clone the repository: git clone https://github.com/lakasir/lakasir.git
-2. Navigate to the project directory: cd lakasir
-3. Install dependencies:
-4. Laravel:
-   * `cp .env.example .env`
-   * edit the env based on your local configuration
-   * `composer install`
-   * `php artisan key:generate`
-   * `php artisan migrate --path=database/migrations/tenant --seed`
-   * `php artisan filament:assets`
-   * `php artisan livewire:publish --assets`
-5. Javascript:
-  * `npm install`
-  * `npm run build or npm run dev`
-6. Create the user using `php artisan app:create-user`
+- PHP 8.3+
+- Composer
+- Node.js & NPM
+- MySQL 8.0+
 
-## Usage
-* api: localdomain.test/api/test
-* webapp: localdomain.test/member/login
+### Installation
+
+1. Clone the repository: `git clone <your-repo-url>`
+2. Navigate to the project directory: `cd kipit`
+3. Install PHP dependencies: `composer install`
+4. Install Node dependencies: `npm install`
+5. Copy environment file: `cp .env.example .env`
+6. Generate application key: `php artisan key:generate`
+7. Run migrations: `php artisan migrate`
+8. Build assets: `npm run build`
+9. Start the development server: `php artisan serve`
 
 ## Contributing
 
-We welcome contributions from the community! If you'd like to contribute to Lakasir, please follow these steps:
+We welcome contributions from the community! If you'd like to contribute to Kipit, please follow these steps:
 
-1. keep on eye on [roadmap](https://github.com/orgs/lakasir/discussions/321)
-2. Fork the repository.
-3. Create a new branch (git checkout -b feature/new-feature). 
-4. Make your changes and commit them (git commit -am 'Add new feature').
-5. Push to the branch (git push origin feature/new-feature).
-6. Create a new Pull Request.
-   
-When contributing to this project, please keep an eye on our project features board on GitHub to stay updated with ongoing and planned features.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## License
-This project is licensed under the GPL-3.0 license - see the [LICENSE](https://github.com/lakasir/lakasir?tab=GPL-3.0-1-ov-file) file for details.
+
+This project is licensed under the GPL-3.0 license - see the LICENSE file for details.
 
 ## Contact
-For any inquiries or support, please contact lakasirapp@gmail.com or you can open discussion in discussion features
 
-## Donate for live longer
-
-[<img src="https://trakteer.id/images/v2/trakteer-logo.png" alt="drawing" width="100"/>](https://trakteer.id/sheenazien8/tip?quantity=1)
-<a href="https://www.buymeacoffee.com/sheenazien8" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="height: 20px !important;width: 100px !important;" ></a>
-
-
-## Star History
-
-<a href="https://star-history.com/#lakasir/lakasir&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=lakasir/lakasir&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=lakasir/lakasir&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=lakasir/lakasir&type=Date" />
- </picture>
-</a>
+For any inquiries or support, please open a discussion in the repository's discussion features.

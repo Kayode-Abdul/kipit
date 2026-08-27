@@ -30,13 +30,17 @@ class UpdateChecker
     private function fetchAndCacheApiResponse(): ?array
     {
         return cache()->remember('api_response', now()->addMinutes(60 * 8), function () {
-            $response = Http::get($this->url);
+            try {
+                $response = Http::get($this->url);
 
-            if (! $response->ok()) {
+                if (! $response->ok()) {
+                    return null;
+                }
+
+                return $response->json();
+            } catch (\Exception $e) {
                 return null;
             }
-
-            return $response->json();
         });
     }
 

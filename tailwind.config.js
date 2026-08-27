@@ -24,7 +24,7 @@ export default {
         sans: ["Figtree", ...defaultTheme.fontFamily.sans],
       },
       colors: {
-        lakasir: {
+        kipit: {
           primary: "#FF6600",
         }
       },

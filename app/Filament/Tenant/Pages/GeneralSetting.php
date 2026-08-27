@@ -110,11 +110,8 @@ class GeneralSetting extends Page implements HasActions, HasForms
                         ->translateLabel()
                         ->schema([
                             Select::make('currency')
-                                ->options([
-                                    'IDR' => 'IDR',
-                                    'MXN' => 'MXN',
-                                    'USD' => 'USD',
-                                ])
+                                ->options(\Symfony\Component\Intl\Currencies::getNames())
+                                ->searchable()
                                 ->translateLabel(),
                             Select::make('minimum_stock_nofication')
                                 ->options([

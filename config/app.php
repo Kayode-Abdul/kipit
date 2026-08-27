@@ -203,6 +203,10 @@ return [
         App\Providers\VoltServiceProvider::class,
         App\Providers\TenancyServiceProvider::class,
         App\Providers\Filament\TenantPanelProvider::class,
+        App\Providers\Filament\AdminPanelProvider::class,
+        App\Providers\NativeAppServiceProvider::class,
+        Native\Laravel\NativeServiceProvider::class,
+        Native\Electron\ElectronServiceProvider::class,
     ],
 
     /*

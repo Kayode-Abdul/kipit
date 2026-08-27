@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Artisan::call('tenants:run app:fill-is-owner-to-users');
+        if (!\App\Helpers\DesktopHelper::isDesktopApp()) {
+            Artisan::call('tenants:run app:fill-is-owner-to-users');
+        }
         // Schema::dropIfExists('tenant_users');
     }
 

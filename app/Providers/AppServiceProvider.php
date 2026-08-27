@@ -68,5 +68,10 @@ class AppServiceProvider extends ServiceProvider
 
         Feature::resolveScopeUsing(fn ($driver) => null);
         Feature::discover();
+
+        if (\App\Helpers\DesktopHelper::isDesktopApp()) {
+            config(['database.default' => 'sqlite']);
+            config(['database.connections.sqlite.database' => \App\Helpers\DesktopHelper::getSqlitePath()]);
+        }
     }
 }

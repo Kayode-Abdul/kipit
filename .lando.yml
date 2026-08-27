@@ -1,10 +1,10 @@
-name: lakasir
+name: kipit
 recipe: laravel
 proxxy:
   web:
-    - lakasir.lndo.site
+    - kipit.lndo.site
   web2:
-    - admin.lakasir.lndo.site
+    - admin.kipit.lndo.site
 services:
   appserver:
     xdebug: false
