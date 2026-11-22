@@ -3,13 +3,10 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Collection;
 
 /**
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
@@ -20,51 +17,65 @@ use Illuminate\Support\Collection;
  * @mixin \Eloquent
  * @mixin IdeHelperAdmin
  */
-class Admin extends Authenticatable implements FilamentUser, HasTenants
+class Admin extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_WRITER = 'writer';
+
     protected $fillable = [
         'name',
         'email',
+        'role',
         'password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
-    public function canAccessTenant(Model $tenant): bool
+    public function __construct(array $attributes = [])
     {
-        return true;
+        parent::__construct($attributes);
+        // Always use the central DB (admins live with tenants/domains, not shop SQLite).
+        $this->connection = config('tenancy.database.central_connection', config('database.default', 'mysql'));
     }
 
-    public function getTenants(Panel $panel): array|Collection
+    public function isAdmin(): bool
     {
-        return [];
+        return ($this->role ?? self::ROLE_ADMIN) === self::ROLE_ADMIN;
+    }
+
+    public function isWriter(): bool
+    {
+        return ($this->role ?? self::ROLE_ADMIN) === self::ROLE_WRITER;
+    }
+
+    public function canManageBlog(): bool
+    {
+        return $this->isAdmin() || $this->isWriter();
+    }
+
+    public function canManageSupport(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    public function canManageAdmins(): bool
+    {
+        return $this->isAdmin();
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $panel->getId() === 'admin';
     }
 }

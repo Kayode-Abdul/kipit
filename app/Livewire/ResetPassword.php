@@ -58,9 +58,9 @@ class ResetPassword extends Component
             ]);
         }
 
-        session()->flash('message', 'Password reset successfully.');
+        session()->flash('status', __('Password reset successfully. You can now log in.'));
 
-        $this->reset(['password', 'password_confirmation']);
+        return redirect()->to('/member/login');
     }
 
     public function render()

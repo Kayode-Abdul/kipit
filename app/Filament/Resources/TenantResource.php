@@ -13,6 +13,14 @@ use Filament\Tables\Table;
 
 class TenantResource extends Resource
 {
+    public static function canViewAny(): bool
+    {
+        /** @var \App\Models\Admin|null $admin */
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+
+        return $admin?->isAdmin() ?? false;
+    }
+
     protected static ?string $model = Tenant::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
@@ -65,8 +73,17 @@ class TenantResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('Store Prefix')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('tenancy_email')
+                Tables\Columns\TextColumn::make('full_name')
+                    ->label('Shop Name')
+                    ->placeholder('—')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('tenancy_email')
+                    ->label('Owner Email')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('business_type')
+                    ->label('Business')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

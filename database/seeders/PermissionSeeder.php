@@ -256,6 +256,18 @@ class PermissionSeeder extends Seeder
                         ],
                         'guard' => ['web'],
                     ],
+                    'connected devices' => [
+                        'permission' => [
+                            'access',
+                        ],
+                        'guard' => ['web', 'desktop'],
+                    ],
+                    'desktop' => [
+                        'permission' => [
+                            'access',
+                        ],
+                        'guard' => ['desktop'],
+                    ],
                     'printer' => [
                         'permission' => [
                             'access',
@@ -301,10 +313,17 @@ class PermissionSeeder extends Seeder
                     $actions[$i] = $action;
                 }
                 foreach ($actions as $action) {
+                    $guards = $crud['guard'];
+                    // Desktop has its own guard; seed desktop twins for anything that has web
+                    // (except when desktop is already listed explicitly, e.g. access desktop).
+                    if (in_array('web', $guards, true) && ! in_array('desktop', $guards, true)) {
+                        $guards[] = 'desktop';
+                    }
+
                     $normalize[] = [
                         'role' => $permissions['role'],
                         'action' => trim($action),
-                        'guard' => $crud['guard'],
+                        'guard' => $guards,
                     ];
                 }
             }

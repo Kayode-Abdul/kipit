@@ -3,14 +3,21 @@
 namespace App\Services;
 
 use App\Helpers\DesktopHelper;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class DatabaseIntegrityService
 {
+    public const CACHE_INTEGRITY_FAILED = 'desktop_integrity_failed';
+
+    public const CACHE_CLOUD_WINS_REPAIR = 'desktop_cloud_wins_repair';
+
     /**
-     * Tables whose content is critical and should be integrity-checked.
+     * Auth + commercial data covered by integrity fingerprints.
+     *
+     * @var list<string>
      */
     protected array $protectedTables = [
         'users',
@@ -19,149 +26,197 @@ class DatabaseIntegrityService
         'role_has_permissions',
         'model_has_roles',
         'model_has_permissions',
+        'products',
+        'stocks',
+        'categories',
+        'members',
+        'sellings',
+        'selling_details',
+        'purchasings',
+        'stock_opnames',
+        'stock_opname_items',
+        'receivables',
+        'receivable_items',
+        'receivable_payments',
+        'cash_drawers',
+        'payment_methods',
+        'suppliers',
+        'vouchers',
+        'settings',
         'abouts',
     ];
 
     /**
-     * Compute an HMAC checksum of critical database tables and store it.
-     * Called after migrations/seeding on startup.
-     */
-    public function generateChecksum(): string
-    {
-        $dataFingerprint = $this->buildDataFingerprint();
-        $hmacKey = $this->getHmacKey();
-        $checksum = hash_hmac('sha256', $dataFingerprint, $hmacKey);
-
-        $this->storeChecksum($checksum);
-
-        return $checksum;
-    }
-
-    /**
-     * Verify the current database state against the stored checksum.
-     *
-     * @return array{valid: bool, message: string}
+     * @return array{valid: bool, message: string, checksum?: string}
      */
     public function verify(): array
     {
+        if (! DesktopHelper::isDesktopApp()) {
+            return ['valid' => true, 'message' => 'Not desktop — skipped.'];
+        }
+
         $checksumPath = $this->getChecksumPath();
 
-        if (!file_exists($checksumPath)) {
-            // No previous checksum — first run, generate and store
-            $this->generateChecksum();
+        if (! file_exists($checksumPath)) {
+            $checksum = $this->generateChecksum();
 
             return [
                 'valid' => true,
                 'message' => 'First run — checksum generated and stored.',
+                'checksum' => $checksum,
             ];
         }
 
-        $storedChecksum = trim(file_get_contents($checksumPath));
-        $currentFingerprint = $this->buildDataFingerprint();
-        $hmacKey = $this->getHmacKey();
-        $currentChecksum = hash_hmac('sha256', $currentFingerprint, $hmacKey);
+        $storedChecksum = trim((string) file_get_contents($checksumPath));
+        $currentChecksum = $this->computeChecksum();
 
         if (hash_equals($storedChecksum, $currentChecksum)) {
+            Cache::forget(self::CACHE_INTEGRITY_FAILED);
+
             return [
                 'valid' => true,
                 'message' => 'Database integrity verified — no tampering detected.',
+                'checksum' => $currentChecksum,
             ];
         }
 
-        Log::warning('Database integrity check FAILED. Stored checksum does not match computed checksum.', [
+        Cache::put(self::CACHE_INTEGRITY_FAILED, true, 86400);
+
+        Log::warning('Database integrity check FAILED.', [
             'stored' => $storedChecksum,
             'computed' => $currentChecksum,
         ]);
 
         return [
             'valid' => false,
-            'message' => 'Database integrity check failed. The database may have been tampered with outside the application.',
+            'message' => 'Database integrity check failed. Local data may have been altered outside Kipit POS. Cloud repair is required.',
+            'checksum' => $currentChecksum,
         ];
     }
 
-    /**
-     * Update the stored checksum to reflect current legitimate state.
-     * Called after authorized data changes (sync, admin operations).
-     */
+    public function generateChecksum(): string
+    {
+        $checksum = $this->computeChecksum();
+        $this->storeChecksum($checksum);
+        Cache::forget(self::CACHE_INTEGRITY_FAILED);
+
+        return $checksum;
+    }
+
     public function refreshChecksum(): string
     {
         return $this->generateChecksum();
     }
 
+    public function computeChecksum(): string
+    {
+        return hash_hmac('sha256', $this->buildDataFingerprint(), $this->getHmacKey());
+    }
+
+    public function markCloudWinsRepair(): void
+    {
+        Cache::put(self::CACHE_CLOUD_WINS_REPAIR, true, 86400);
+        Cache::put(self::CACHE_INTEGRITY_FAILED, true, 86400);
+    }
+
+    public function clearCloudWinsRepair(): void
+    {
+        Cache::forget(self::CACHE_CLOUD_WINS_REPAIR);
+        Cache::forget(self::CACHE_INTEGRITY_FAILED);
+    }
+
+    public function shouldPreferCloud(): bool
+    {
+        return (bool) Cache::get(self::CACHE_CLOUD_WINS_REPAIR, false)
+            || (bool) Cache::get(self::CACHE_INTEGRITY_FAILED, false);
+    }
+
     /**
-     * Build a deterministic fingerprint string from protected table data.
+     * @return list<string>
      */
+    public function protectedTables(): array
+    {
+        return $this->protectedTables;
+    }
+
     protected function buildDataFingerprint(): string
     {
         $parts = [];
 
         foreach ($this->protectedTables as $table) {
-            if (!Schema::hasTable($table)) {
+            if (! Schema::hasTable($table)) {
                 continue;
             }
 
-            try {
-                // Get a deterministic representation: sorted rows as JSON
-                $rows = DB::table($table)
-                    ->orderBy('id')
-                    ->get()
-                    ->map(function ($row) {
-                        // Convert to array and sort by key for determinism
-                        $data = (array) $row;
-                        ksort($data);
-
-                        return $data;
-                    })
-                    ->toArray();
-
-                $parts[] = $table . ':' . json_encode($rows, JSON_UNESCAPED_UNICODE);
-            } catch (\Throwable $e) {
-                // If a table can't be read (e.g., missing 'id' column), use row count
-                try {
-                    $count = DB::table($table)->count();
-                    $parts[] = $table . ':count:' . $count;
-                } catch (\Throwable $e2) {
-                    $parts[] = $table . ':error';
-                }
-            }
+            $parts[] = $this->tableFingerprint($table);
         }
 
         return implode('|', $parts);
     }
 
-    /**
-     * Derive the HMAC key from the app key + a desktop-specific salt.
-     */
+    protected function tableFingerprint(string $table): string
+    {
+        try {
+            $count = (int) DB::table($table)->count();
+            $maxUpdated = '';
+            if (Schema::hasColumn($table, 'updated_at')) {
+                $maxUpdated = (string) (DB::table($table)->max('updated_at') ?? '');
+            }
+
+            $hash = hash_init('sha256');
+            $columns = ['id'];
+            if (Schema::hasColumn($table, 'sync_id')) {
+                $columns[] = 'sync_id';
+            }
+            if (Schema::hasColumn($table, 'updated_at')) {
+                $columns[] = 'updated_at';
+            }
+
+            if (Schema::hasColumn($table, 'id')) {
+                DB::table($table)
+                    ->orderBy('id')
+                    ->select($columns)
+                    ->chunkById(2_000, function ($rows) use ($hash) {
+                        foreach ($rows as $row) {
+                            $data = (array) $row;
+                            ksort($data);
+                            hash_update($hash, json_encode($data, JSON_UNESCAPED_UNICODE).';');
+                        }
+                    });
+            } else {
+                hash_update($hash, 'count:'.$count);
+            }
+
+            return $table.':'.$count.':'.$maxUpdated.':'.hash_final($hash);
+        } catch (\Throwable $e) {
+            Log::warning("Integrity fingerprint failed for {$table}: ".$e->getMessage());
+
+            return $table.':error';
+        }
+    }
+
     protected function getHmacKey(): string
     {
-        $appKey = config('app.key', 'kipit-desktop-fallback-key');
-        $salt = 'kipit-desktop-integrity-v1';
+        $appKey = config('app.key') ?: 'base64:kipitDesktopSecretKey2026DefaultSaltKey=';
 
-        return hash('sha256', $appKey . $salt);
+        return hash('sha256', $appKey.'kipit-desktop-integrity-v2');
     }
 
-    /**
-     * Get the path to the checksum file.
-     */
     protected function getChecksumPath(): string
     {
-        return DesktopHelper::getConfigDir() . DIRECTORY_SEPARATOR . 'database.checksum';
+        return DesktopHelper::getConfigDir().DIRECTORY_SEPARATOR.'database.checksum';
     }
 
-    /**
-     * Write the checksum to the file system.
-     */
     protected function storeChecksum(string $checksum): void
     {
         $configDir = DesktopHelper::getConfigDir();
-        if (!is_dir($configDir)) {
+        if (! is_dir($configDir)) {
             mkdir($configDir, 0700, true);
         }
 
         $checksumPath = $this->getChecksumPath();
         file_put_contents($checksumPath, $checksum);
 
-        // Set restrictive permissions on the checksum file (macOS/Linux)
         if (PHP_OS_FAMILY !== 'Windows') {
             chmod($checksumPath, 0600);
         }

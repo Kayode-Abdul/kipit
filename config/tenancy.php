@@ -44,26 +44,33 @@ return [
      * Database tenancy config. Used by DatabaseTenancyBootstrapper.
      */
     'database' => [
-        'central_connection' => env('DB_CONNECTION', 'central'),
+        // Central app (tenants, domains, billing, etc.) — keep MySQL on shared hosting.
+        'central_connection' => env('DB_CONNECTION', 'mysql'),
 
         /**
          * Connection used as a "template" for the dynamically created tenant database connection.
          * Note: don't name your template connection tenant. That name is reserved by package.
+         *
+         * Force SQLite so each shop is a file under database/ (kipit_{shop}), even when
+         * DB_CONNECTION=mysql for the central database.
          */
+        // Always SQLite files per shop. Do not point this at mysql — shared hosting
+        // cannot CREATE/DROP tenant MySQL databases. Central DB stays on DB_CONNECTION.
         'template_tenant_connection' => 'sqlite',
 
         /**
          * Tenant database names are created like this:
          * prefix + tenant_id + suffix.
+         * (RegisterTenant also sets tenancy_db_name explicitly to kipit_{domain}.)
          */
-        'prefix' => 'tenant',
+        'prefix' => 'kipit_',
         'suffix' => '',
 
         /**
          * TenantDatabaseManagers are classes that handle the creation & deletion of tenant databases.
          */
         'managers' => [
-            'sqlite' => Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager::class,
+            'sqlite' => App\TenantDatabaseManagers\SQLiteFileDatabaseManager::class,
             'mysql' => Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager::class,
             'pgsql' => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager::class,
 
@@ -119,7 +126,7 @@ return [
         'root_override' => [
             // Disks whose roots should be overriden after storage_path() is suffixed.
             'local' => '%storage_path%/app/',
-            'public' => '%storage_path%/app/public/',
+            'public' => public_path('storage'),
         ],
 
         /**

@@ -2,130 +2,153 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ActivationKey;
-use App\Models\Tenants\User;
-use App\Tenant;
+use App\Models\SubscriptionPlan;
+use App\Services\PaystackActivationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Throwable;
 
 class PaystackController extends Controller
 {
     /**
+     * Initialize Paystack checkout outside Livewire so shared-hosting
+     * request timeouts (408) do not kill the Filament action mid-flight.
+     */
+    public function checkout(Request $request)
+    {
+        @set_time_limit(60);
+
+        try {
+            $planId = (int) $request->query('plan_id');
+            $tenant = tenant();
+            $user = Auth::guard('web')->user() ?? $request->user();
+
+            if (! $tenant || ! $user) {
+                return redirect('/member/activation')
+                    ->with('error', __('You must be logged in to pay.'));
+            }
+
+            $secretKey = (string) (
+                config('services.paystack.secret_key')
+                ?: env('PAYSTACK_SECRET_KEY')
+                ?: ($_ENV['PAYSTACK_SECRET_KEY'] ?? '')
+            );
+
+            if (trim($secretKey) === '') {
+                Log::error('Paystack checkout failed: PAYSTACK_SECRET_KEY not set.');
+
+                return redirect('/member/activation')
+                    ->with('error', __('Paystack is not configured. Please contact support.'));
+            }
+
+            $central = (string) config('tenancy.database.central_connection', config('database.default', 'mysql'));
+
+            $plan = SubscriptionPlan::on($central)
+                ->with('prices')
+                ->where('is_published', true)
+                ->find($planId);
+
+            if (! $plan) {
+                return redirect('/member/activation')
+                    ->with('error', __('Please choose a published subscription plan.'));
+            }
+
+            $price = $plan->prices->firstWhere('currency_code', 'NGN')
+                ?? $plan->prices->first();
+
+            if (! $price) {
+                return redirect('/member/activation')
+                    ->with('error', __('This plan is missing a price. Please contact support.'));
+            }
+
+            $amount = (float) $price->price;
+            $currency = strtoupper((string) $price->currency_code);
+
+            $response = Http::withToken(trim($secretKey))
+                ->timeout(12)
+                ->connectTimeout(5)
+                ->asJson()
+                ->post('https://api.paystack.co/transaction/initialize', [
+                    'email' => $user->email,
+                    'amount' => (int) round($amount * 100),
+                    'currency' => $currency,
+                    'reference' => 'KIPIT_'.time().'_'.$tenant->getTenantKey(),
+                    'callback_url' => url('/member/activation'),
+                    'metadata' => [
+                        'tenant_id' => $tenant->getTenantKey(),
+                        'plan_id' => $plan->id,
+                        'duration_in_months' => (int) $plan->duration_in_months,
+                        'type' => 'subscription_purchase',
+                    ],
+                ]);
+
+            $authorizationUrl = data_get($response->json(), 'data.authorization_url');
+
+            if ($response->successful() && is_string($authorizationUrl) && $authorizationUrl !== '') {
+                return redirect()->away($authorizationUrl);
+            }
+
+            Log::error('Paystack checkout rejected', [
+                'tenant_id' => $tenant->getTenantKey(),
+                'plan_id' => $plan->id,
+                'status' => $response->status(),
+                'body' => $response->json() ?? $response->body(),
+            ]);
+
+            $message = data_get($response->json(), 'message')
+                ?? __('Please check your Paystack keys.');
+
+            return redirect('/member/activation')->with('error', $message);
+        } catch (Throwable $e) {
+            Log::error('Paystack checkout crashed', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            // Show the real error so shared-hosting debugging is possible.
+            return response(
+                '<h1>Paystack checkout error</h1><pre>'.e($e->getMessage()."\n".$e->getFile().':'.$e->getLine()).'</pre>'
+                .'<p><a href="/member/activation">Back to activation</a></p>',
+                500
+            );
+        }
+    }
+
+    /**
      * Handle Paystack Webhook
      */
-    public function webhook(Request $request)
+    public function webhook(Request $request, PaystackActivationService $activationService)
     {
-        // 1. Verify the signature
-        $secretKey = env('PAYSTACK_SECRET_KEY');
-        if (!$secretKey) {
+        $secretKey = (string) (
+            config('services.paystack.secret_key')
+            ?: env('PAYSTACK_SECRET_KEY')
+            ?: ($_ENV['PAYSTACK_SECRET_KEY'] ?? '')
+        );
+
+        if (trim($secretKey) === '') {
             Log::error('Paystack webhook failed: PAYSTACK_SECRET_KEY not set.');
+
             return response()->json(['status' => 'error'], 500);
         }
 
         $signature = $request->header('x-paystack-signature');
-        if (!$signature) {
+        if (! $signature) {
             return response()->json(['status' => 'error', 'message' => 'Missing signature'], 400);
         }
 
-        // Validate event origin
         $input = $request->getContent();
-        if ($signature !== hash_hmac('sha512', $input, $secretKey)) {
+        if ($signature !== hash_hmac('sha512', $input, trim($secretKey))) {
             Log::warning('Paystack webhook failed: Invalid signature.');
+
             return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 401);
         }
 
         $event = json_decode($input, true);
-
-        // We only care about charge.success
-        if ($event['event'] === 'charge.success') {
-            $data = $event['data'];
-            $metadata = $data['metadata'] ?? [];
-            
-            $tenantId = $metadata['tenant_id'] ?? null;
-            
-            if (!$tenantId) {
-                Log::warning('Paystack webhook: Successful payment received, but missing tenant_id in metadata.');
-                return response()->json(['status' => 'success']); // Paystack expects 200 OK so it doesn't retry
-            }
-
-            $tenant = Tenant::find($tenantId);
-            if (!$tenant) {
-                Log::warning("Paystack webhook: Tenant ID {$tenantId} not found.");
-                return response()->json(['status' => 'success']);
-            }
-
-            $type = $metadata['type'] ?? 'activation_key';
-            
-            // Log the transaction
-            \App\Models\Transaction::firstOrCreate([
-                'reference' => $data['reference'] ?? Str::random(16),
-            ], [
-                'tenant_id' => $tenant->id,
-                'amount' => ($data['amount'] ?? 0) / 100,
-                'currency' => $data['currency'] ?? 'USD',
-                'type' => $type,
-                'status' => 'success',
-            ]);
-
-            if ($type === 'subscription_purchase') {
-                // Determine how many months to add
-                $months = $metadata['duration_in_months'] ?? 1;
-                $keyStr = Str::random(16);
-                
-                if ($tenant) {
-                    // Append to existing plan
-                    $latestExpiry = ActivationKey::where('tenant_id', $tenant->id)->max('expires_at');
-                    $baseDate = $latestExpiry ? max(now(), \Carbon\Carbon::parse($latestExpiry)) : now();
-                    $expiresAt = $baseDate->addMonths((int)$months);
-                } else {
-                    $expiresAt = now()->addMonths((int)$months);
-                }
-
-                ActivationKey::create([
-                    'key' => $keyStr,
-                    'is_used' => $tenant ? true : false,
-                    'tenant_id' => $tenant ? $tenant->id : null,
-                    'expires_at' => $expiresAt,
-                ]);
-
-                if ($tenant) {
-                    Log::info("Paystack webhook: Successfully added {$months} months subscription to tenant {$tenant->id} with key {$keyStr}");
-                }
-            } else {
-                // Generate Key (Permanent)
-                $keyStr = Str::random(16);
-                
-                ActivationKey::create([
-                    'key' => $keyStr,
-                    'is_used' => false,
-                    'tenant_id' => $tenant ? $tenant->id : null,
-                    'expires_at' => null, // Permanent
-                ]);
-
-                if ($tenant) {
-                    Log::info("Paystack webhook: Successfully activated shop for tenant {$tenant->id} with permanent key {$keyStr}");
-                }
-            }
-
-            // Send email to customer with the key
-            $customerEmail = $event['data']['customer']['email'] ?? null;
-            if ($customerEmail) {
-                try {
-                    $receiptData = [
-                        'reference' => $data['reference'] ?? 'N/A',
-                        'type' => $type === 'subscription_purchase' ? 'Subscription' : 'Access Key',
-                        'amount' => price_format(($data['amount'] ?? 0) / 100, $data['currency'] ?? 'NGN'),
-                        'activation_key' => $keyStr,
-                        'is_used' => $tenant ? true : false,
-                        'expires_at' => $expiresAt ?? null,
-                    ];
-                    \Illuminate\Support\Facades\Mail::to($customerEmail)->send(new \App\Mail\TransactionReceipt($receiptData));
-                    Log::info("Paystack webhook: Sent activation key {$keyStr} to {$customerEmail}");
-                } catch (\Exception $e) {
-                    Log::error("Paystack webhook: Failed to send activation key to {$customerEmail}. Error: " . $e->getMessage());
-                }
-            }
+        if (($event['event'] ?? null) === 'charge.success') {
+            $activationService->fulfillSuccessfulCharge($event['data'] ?? []);
         }
 
         return response()->json(['status' => 'success']);

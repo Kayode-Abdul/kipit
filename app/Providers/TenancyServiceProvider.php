@@ -48,7 +48,7 @@ class TenancyServiceProvider extends ServiceProvider
                     Jobs\DeleteDatabase::class,
                 ])->send(function (Events\TenantDeleted $event) {
                     return $event->tenant;
-                })->shouldBeQueued(true), // `false` by default, but you probably want to make this `true` for production.
+                })->shouldBeQueued(false), // Changed to false to drop database immediately
             ],
 
             // Domain events

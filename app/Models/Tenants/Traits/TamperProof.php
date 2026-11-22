@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\Log;
 trait TamperProof
 {
     /**
+     * Flag indicating if the record has been tampered with.
+     * Defined as a public property so Eloquent doesn't treat it as a database column.
+     *
+     * @var bool
+     */
+    public bool $is_tampered = false;
+
+    /**
      * Boot the tamper-proof trait for a model.
      *
      * @return void

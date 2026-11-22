@@ -3,13 +3,13 @@
 use function Livewire\Volt\layout;
 use function Livewire\Volt\state;
 use function Livewire\Volt\mount;
+use function Livewire\Volt\with;
 use App\Models\SubscriptionPlan;
 use App\Models\SystemSetting;
 
 layout('livewire.components.layouts.guest');
 
 state([
-    'prices' => [],
     'accessKeyPrice' => 50000,
     'email' => '',
     'checkoutType' => '',
@@ -44,7 +44,7 @@ $processCheckout = function () {
         ];
     }
 
-    $response = \Illuminate\Support\Facades\Http::withToken(env('PAYSTACK_SECRET_KEY'))
+    $response = \Illuminate\Support\Facades\Http::withToken(config('services.paystack.secret_key'))
             ->post('https://api.paystack.co/transaction/initialize', [
                 'email' => $this->email,
                 'amount' => $amount * 100, // kobo
@@ -67,7 +67,9 @@ mount(function () {
     }
 
     $this->accessKeyPrice = (int) SystemSetting::get('access_key_price', 50000);
+});
 
+with(function () {
     // Fetch dynamic prices
     $plans = SubscriptionPlan::with('prices')->where('is_published', true)->get();
     
@@ -95,24 +97,9 @@ mount(function () {
         ];
     })->toArray();
 
-    // Commented out the full feature (Access Key) plan for now
-    /*
-    $mappedPrices[] = [
-        'id' => null,
-        'type' => 'access_key',
-        'title' => 'Access Key',
-        'description' => 'Purchase an access key to unlock kipit permanently with full features and priority support.',
-        'price' => price_format($this->accessKeyPrice, 'NGN'),
-        'button' => 'Buy Access Key',
-        'route' => '',
-        'includes' => [
-            'All features unlocked', 'Priority support', 'Automatic updates', '24-hour support', 'Data backup provision',
-        ],
-        'excludes' => [],
+    return [
+        'prices' => $mappedPrices,
     ];
-    */
-
-    $this->prices = $mappedPrices;
 });
 
 ?>
@@ -128,6 +115,7 @@ mount(function () {
         </div>
         <div class="relative items-center hidden px-4 mt-2 space-x-5 font-medium leading-10 md:flex md:flex-grow-0 md:flex-shrink-0 md:mt-0 md:text-right lg:flex-grow-0 lg:flex-shrink-0">
           <a href="/download" class="font-medium text-gray-500 hover:text-gray-900">Download</a>
+          <a href="/blog" class="font-medium text-gray-500 hover:text-gray-900">Blog</a>
           <a href="/pricing" class="font-medium text-kipit-primary hover:text-gray-900">Pricing</a>
           <a href="/member/login"
             class="bg-gray-100 text-gray-400 md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-gray-100 focus:text-gray-700 hover:text-gray-700"

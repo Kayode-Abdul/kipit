@@ -28,9 +28,17 @@ class CheckTenantActivation
                     ], 403);
                 }
 
-                // Check if current request is for the activation page, logout, or asset files
+                // Check if current request is for activation, auth, password reset, or assets
                 $isExcluded = $request->routeIs('filament.tenant.pages.activation')
+                    || $request->routeIs('paystack.checkout')
+                    || $request->routeIs('filament.tenant.auth.password-reset.*')
+                    || $request->routeIs('reset-password.index')
+                    || $request->routeIs('password.email')
                     || $request->is('*/activation*')
+                    || $request->is('*/paystack/checkout*')
+                    || $request->is('*/password-reset*')
+                    || $request->is('reset-password*')
+                    || $request->is('*/login*')
                     || $request->is('*/logout*')
                     || $request->is('livewire/*')
                     || $request->is('_debugbar/*');

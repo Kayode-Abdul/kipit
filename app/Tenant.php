@@ -31,7 +31,8 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function isActiveKey(): bool
     {
         try {
-            if (!\Illuminate\Support\Facades\Schema::hasTable('activation_keys')) {
+            $centralConnection = config('tenancy.database.central_connection', 'mysql');
+            if (!\Illuminate\Support\Facades\Schema::connection($centralConnection)->hasTable('activation_keys')) {
                 return false;
             }
             return \App\Models\ActivationKey::where('tenant_id', $this->id)

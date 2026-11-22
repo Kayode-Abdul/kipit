@@ -1,0 +1,90 @@
+KIPIT COMMERCIAL / PROPRIETARY LICENSE
+======================================
+
+Copyright (c) 2024–2026 Kipit. All rights reserved.
+
+IMPORTANT — SCOPE
+-----------------
+This Commercial License applies only to the proprietary Kipit software,
+features, modules, branding, documentation, and other materials that are
+owned by Kipit and are not licensed under a third-party open-source license.
+
+It does NOT replace, revoke, or modify:
+  • the root LICENSE file (GNU GPL v3) where that license applies to
+    retained open-source portions of this codebase; or
+  • any MIT or other open-source license notices in third-party packages
+    (including packages originally published under the Lakasir / sheenazien8
+    projects and other vendor dependencies).
+
+Those third-party notices must be preserved. See THIRD_PARTY_NOTICES.md.
+
+1. OWNERSHIP
+------------
+Subject to applicable open-source licenses for third-party components,
+all right, title, and interest in and to Kipit’s proprietary code,
+trademarks, logos, product name “Kipit”, and related materials remain
+exclusively with Kipit (and/or its licensors).
+
+2. GRANT OF LICENSE
+-------------------
+Unless you have a separate written agreement with Kipit, you are granted
+a limited, non-exclusive, non-transferable, revocable license to use the
+Kipit proprietary software solely as delivered (for example, via a
+hosted subscription, licensed installer, or other authorized channel)
+and only for your internal business operations.
+
+3. RESTRICTIONS
+---------------
+Except as expressly permitted by Kipit in writing, or as required by an
+applicable open-source license for a specific third-party component, you
+may not:
+
+  a. copy, modify, sell, rent, lease, sublicense, or redistribute the
+     proprietary Kipit software;
+  b. reverse engineer, decompile, or disassemble the proprietary Kipit
+     software, except to the extent such restriction is prohibited by law;
+  c. remove or alter any copyright, trademark, or proprietary notices;
+  d. use Kipit trademarks in a way that implies endorsement without
+     prior written consent;
+  e. use the proprietary software to build a competing product that
+     redistributes Kipit’s proprietary source or substantial proprietary
+     derivatives.
+
+4. OPEN-SOURCE COMPONENTS (DUAL STRUCTURE)
+------------------------------------------
+This distribution may include:
+
+  • Open-source / upstream core modules and dependencies that remain
+    under their original licenses (for example MIT for certain Lakasir-
+    related packages, and GPL-3.0 where that root LICENSE applies); and
+  • Kipit proprietary / advanced features (including but not limited to
+    desktop provisioning, commercial billing integrations, branded
+    installers, and Kipit-specific product enhancements) which are
+    licensed under THIS Commercial License.
+
+If there is a conflict between this Commercial License and an open-source
+license that governs a specific file or package, the open-source license
+controls for that file or package only.
+
+5. NO WARRANTY
+--------------
+THE PROPRIETARY KIPIT SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+IN NO EVENT SHALL KIPIT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+6. TERMINATION
+--------------
+This license terminates automatically if you breach its terms. Upon
+termination you must cease use of the proprietary Kipit software and
+destroy copies in your possession, except for components you are
+entitled to retain under an applicable open-source license.
+
+7. CONTACT
+----------
+For commercial licensing, redistribution rights, or OEM / white-label
+inquiries, contact Kipit through the official support channels published
+on the Kipit website or product documentation.
+
+END OF COMMERCIAL LICENSE

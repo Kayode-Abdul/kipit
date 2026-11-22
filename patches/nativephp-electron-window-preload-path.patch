@@ -1,0 +1,11 @@
+--- resources/js/electron-plugin/dist/server/api/window.js
++++ resources/js/electron-plugin/dist/server/api/window.js
+@@ -152,7 +152,7 @@
+         res.sendStatus(200);
+         return;
+     }
+-    let preloadPath = fileURLToPath(new URL('../../electron-plugin/dist/preload/index.mjs', import.meta.url));
++    let preloadPath = fileURLToPath(new URL('../../preload/index.mjs', import.meta.url));
+     const defaultWebPreferences = {
+         backgroundThrottling: false,
+         spellcheck: false,

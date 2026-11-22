@@ -2,13 +2,14 @@
 
 namespace App\Filament\Tenant\Pages;
 
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Filament\Tenant\Pages\Traits\HasReportPageSidebar;
 use App\Traits\HasTranslatableResource;
 use Filament\Pages\Page;
 
 class Report extends Page
 {
-    use HasReportPageSidebar, HasTranslatableResource;
+    use HasPageNavigation, HasReportPageSidebar, HasTranslatableResource;
 
     protected static ?string $title = '';
 

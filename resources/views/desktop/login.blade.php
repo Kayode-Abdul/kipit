@@ -2,7 +2,7 @@
   <div class="login-screen">
     <div class="login-card">
       <div class="login-logo">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/logo/image-1.png'))) }}" alt="Kipit POS">
+        <img src="{{ asset('assets/logo/image-1.png') }}" alt="Kipit POS">
         <h1>Welcome Back</h1>
         <p>Login to your local Kipit POS</p>
       </div>

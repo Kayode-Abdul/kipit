@@ -13,8 +13,16 @@ class TrustHosts extends Middleware
      */
     public function hosts()
     {
+        if (\App\Helpers\DesktopHelper::isDesktopApp()) {
+            return [
+                '.*',
+            ];
+        }
+
         return [
             $this->allSubdomainsOfApplicationUrl(),
+            '127.0.0.1',
+            'localhost',
         ];
     }
 }

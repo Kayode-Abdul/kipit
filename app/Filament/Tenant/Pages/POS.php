@@ -3,6 +3,7 @@
 namespace App\Filament\Tenant\Pages;
 
 use App\Filament\Tenant\Pages\Traits\CartInteraction;
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Models\Tenants\CartItem;
 use App\Models\Tenants\Category;
 use App\Models\Tenants\Product;
@@ -13,7 +14,7 @@ use App\Models\Tenants\Profile;
 
 class POS extends Page
 {
-    use CartInteraction, HasTranslatableResource;
+    use CartInteraction, HasPageNavigation, HasTranslatableResource;
 
     public static ?string $label = 'POS V2';
 

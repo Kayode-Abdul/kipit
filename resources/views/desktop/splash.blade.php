@@ -1,6 +1,6 @@
 <x-layouts.desktop>
   <div class="splash-screen" id="splash">
-    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/logo/image-1.png'))) }}" alt="Kipit" class="splash-logo">
+    <img src="{{ asset('assets/logo/image-1.png') }}" alt="Kipit" class="splash-logo">
 
     <h1 class="splash-title">
       kipit <span>POS</span>

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Tenant\Pages;
 
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Jobs\RunAppUpdate;
 use App\Services\AppUpdateService;
 use Exception;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
 
 class Update extends Page
 {
+    use HasPageNavigation;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.tenant.pages.update';

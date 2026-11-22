@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Kipit POS</h1>
 
-  <p> Kipit is a Point of Sale (POS) application built using Laravel for the API, the Filament admin panel for the web application, and Flutter for the mobile application. </p>
+  <p> Kipit is a Point of Sale (POS) application built using Laravel for the API, the Filament admin panel for the web application, and NativePHP for the desktop application. </p>
 
   <p>
     <a href="#">
@@ -71,7 +71,13 @@ We welcome contributions from the community! If you'd like to contribute to Kipi
 
 ## License
 
-This project is licensed under the GPL-3.0 license - see the LICENSE file for details.
+Kipit uses a **dual-license** structure:
+
+- **Open-source / upstream portions** remain under their original licenses. See the root [`LICENSE`](LICENSE) file (GNU GPL v3) and package-level notices under `vendor/` (including MIT licenses for Lakasir-related packages). Those notices must not be removed.
+- **Kipit proprietary features, branding, and commercial distribution terms** are covered by [`COMMERCIAL_LICENSE.txt`](COMMERCIAL_LICENSE.txt).
+- Attribution details: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+This is not legal advice; confirm compliance with counsel before redistribution.
 
 ## Contact
 

@@ -11,6 +11,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Password;
@@ -39,8 +40,32 @@ class RegisterTenantForm extends Component implements HasForms
                     TextInput::make('email')
                         ->label(__('Email'))
                         ->email()
-                        ->rules('unique:tenant_users,email')
-                        ->required(),
+                        ->required()
+                        ->helperText(__('Free trial allows up to :count shops per email. Use an activation key to add more.', [
+                            'count' => \App\Services\RegisterTenant::freeTrialShopLimit(),
+                        ]))
+                        ->rules([
+                            function () {
+                                return function (string $attribute, mixed $value, Closure $fail) {
+                                    $email = strtolower(trim((string) $value));
+                                    if ($email === '') {
+                                        return;
+                                    }
+
+                                    // Skip the trial cap when an activation key is provided.
+                                    if (filled($this->data['activation_key'] ?? null)) {
+                                        return;
+                                    }
+
+                                    $limit = \App\Services\RegisterTenant::freeTrialShopLimit();
+                                    if (\App\Services\RegisterTenant::freeTrialShopCountForEmail($email) >= $limit) {
+                                        $fail(__('Free trial is limited to :count shops per email. Activate an existing shop or enter an activation key to continue.', [
+                                            'count' => $limit,
+                                        ]));
+                                    }
+                                };
+                            },
+                        ]),
                     TextInput::make('password')
                         ->password()
                         ->required()
@@ -84,7 +109,14 @@ class RegisterTenantForm extends Component implements HasForms
                     TextInput::make('domain')
                         ->label('Domain')
                         ->rules(['unique:tenants,id', new Domain])
-                        ->suffix('.'.config('tenancy.central_domains')[0]),
+                        ->suffix('.'.config('tenancy.central_domains')[0])
+                        ->helperText(__('No spaces are allowed in a domain name. Use letters, numbers, and hyphens only (e.g. my-shop).'))
+                        ->hint(__('No spaces allowed'))
+                        ->hintColor('warning')
+                        ->extraInputAttributes([
+                            'autocomplete' => 'off',
+                            'spellcheck' => 'false',
+                        ]),
                 ])
                 ->icon('heroicon-o-globe-alt'),
         ];
@@ -140,21 +172,36 @@ class RegisterTenantForm extends Component implements HasForms
             'domain' => strtolower($data['domain'].'.'.config('tenancy.central_domains')[0]),
         ]);
 
-        $tenant = $registerTenant->create($data);
-        
-        if ($activationKeyStr) {
-            $activationKey = \App\Models\ActivationKey::where('key', $activationKeyStr)->first();
-            if ($activationKey) {
-                $activationKey->update([
-                    'is_used' => true,
-                    'tenant_id' => $tenant->id,
-                ]);
+        try {
+            $tenant = $registerTenant->create($data);
+            
+            if ($activationKeyStr) {
+                $activationKey = \App\Models\ActivationKey::where('key', $activationKeyStr)->first();
+                if ($activationKey) {
+                    $activationKey->update([
+                        'is_used' => true,
+                        'tenant_id' => $tenant->id,
+                    ]);
+                }
             }
+
+            $securedDomain = 'https://'.$data['domain'].'/member';
+
+            $this->redirect($securedDomain);
+        } catch (\RuntimeException $e) {
+            Notification::make()
+                ->title(__('Shop limit reached'))
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        } catch (\Throwable $e) {
+            report($e);
+            Notification::make()
+                ->title(__('Could not create this shop'))
+                ->body(__('Please try again or contact support.'))
+                ->danger()
+                ->send();
         }
-
-        $securedDomain = 'https://'.$tenant->domains->first()->domain;
-
-        redirect()->to($securedDomain, secure: true);
     }
 
     public function render()

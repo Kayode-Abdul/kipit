@@ -17,9 +17,10 @@ class Setting extends Model
 
     public static function get($key, $default = null)
     {
-        $cacheKey = 'setting_'.$key;
+        $tenantPrefix = tenant('id') ? tenant('id') . '_' : '';
+        $cacheKey = 'setting_' . $tenantPrefix . $key;
         $result = null;
-        if (! Cache::get('setting_'.$key)) {
+        if (! Cache::get($cacheKey)) {
             $setting = self::where('key', $key)->first();
 
             $result = $setting ? $setting->value ?? $default : $default;
@@ -41,7 +42,8 @@ class Setting extends Model
         );
 
         // Update the value in cache
-        $cacheKey = 'setting_'.$key;
+        $tenantPrefix = tenant('id') ? tenant('id') . '_' : '';
+        $cacheKey = 'setting_' . $tenantPrefix . $key;
         Cache::put($cacheKey, $value, now()->addMinutes(3 * 60));
     }
 }

@@ -39,16 +39,29 @@ Route::middleware([
     \App\Http\Middleware\CheckTenantActivation::class,
 ])
     ->group(function () {
-        Route::get('/member/purchasing-report/generate', PurchasingReportController::class)
-            ->name('purchasing-report.generate');
-        Route::get('/member/selling-report/generate', SellingReportController::class)
-            ->name('selling-report.generate');
-        Route::get('/member/product-report/generate', ProductReportController::class)
-            ->name('product-report.generate');
-        Route::get('/member/cashier-report/generate', CashierReportController::class)
-            ->name('cashier-report.generate');
-        Route::view('/member/sellings/{selling}/print', 'filament.tenant.pages.selling.print-receipt')
-            ->name('selling.print');
+        Route::middleware('auth')->group(function () {
+            Route::get('/member/purchasing-report/generate', PurchasingReportController::class)
+                ->middleware('can:generate purchasing report')
+                ->name('purchasing-report.generate');
+            Route::get('/member/selling-report/generate', SellingReportController::class)
+                ->middleware('can:generate selling report')
+                ->name('selling-report.generate');
+            Route::get('/member/product-report/generate', ProductReportController::class)
+                ->middleware('can:generate product report')
+                ->name('product-report.generate');
+            Route::get('/member/cashier-report/generate', CashierReportController::class)
+                ->middleware('can:generate cashier report')
+                ->name('cashier-report.generate');
+            Route::view('/member/sellings/{selling}/print', 'filament.tenant.pages.selling.print-receipt')
+                ->middleware('can:read selling')
+                ->name('selling.print');
+        });
+
+        // Outside auth middleware: Filament's missing `login` named route can 500
+        // when the default Authenticate redirect runs. Auth is checked in-controller.
+        Route::get('/member/paystack/checkout', [\App\Http\Controllers\PaystackController::class, 'checkout'])
+            ->name('paystack.checkout');
+
         Route::get('/reset-password/{token}', ResetPassword::class)
             ->middleware('guest')
             ->name('reset-password.index');
@@ -115,6 +128,7 @@ Route::middleware([
             Route::group(['prefix' => 'sync'], function () {
                 Route::post('/push', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'push']);
                 Route::get('/pull', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'pull']);
+                Route::post('/push/media', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'pushMedia']);
             });
 
             Route::group(['prefix' => 'desktop'], function () {

@@ -1,10 +1,31 @@
 <?php
 
+use App\Helpers\DesktopHelper;
 use App\Models\Tenants\Profile;
 use App\Models\Tenants\Setting;
 use App\Models\Tenants\User;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Number;
+
+if (! function_exists('tenantPermissionGuard')) {
+    /**
+     * Which Spatie permission guard applies for the current runtime.
+     * Desktop checks the local "desktop" permissions (works offline from SQLite).
+     */
+    function tenantPermissionGuard(): string
+    {
+        if (DesktopHelper::isDesktopApp()) {
+            return 'desktop';
+        }
+
+        if (Auth::getDefaultDriver() === 'sanctum') {
+            return 'sanctum';
+        }
+
+        return 'web';
+    }
+}
 
 if (! function_exists('hasFeatureAndPermission')) {
     function hasFeatureAndPermission(string $feature, ?string $permission = null): bool

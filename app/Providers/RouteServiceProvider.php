@@ -42,6 +42,13 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapWebRoutes()
     {
+        if (\App\Helpers\DesktopHelper::isDesktopApp()) {
+            Route::middleware('web')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/web.php'));
+            return;
+        }
+
         foreach ($this->centralDomains() as $domain) {
             Route::middleware('web')
                 ->domain($domain)
@@ -52,6 +59,14 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapApiRoutes()
     {
+        if (\App\Helpers\DesktopHelper::isDesktopApp()) {
+            Route::prefix('api')
+                ->middleware('api')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/api.php'));
+            return;
+        }
+
         foreach ($this->centralDomains() as $domain) {
             Route::prefix('api')
                 ->domain($domain)
@@ -75,6 +90,14 @@ class RouteServiceProvider extends ServiceProvider
     {
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('contact-form', function (Request $request) {
+            return Limit::perMinute(3)->by($request->ip());
+        });
+
+        RateLimiter::for('webhook', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
         });
     }
 }

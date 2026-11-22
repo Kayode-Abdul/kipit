@@ -48,6 +48,8 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 use Filament\Pages;
 use Filament\Pages\Page;
 use Filament\Panel;
@@ -56,7 +58,6 @@ use Filament\Resources\Resource;
 use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
-use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -67,7 +68,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Illuminate\View\View;
 use Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper;
 
 class TenantPanelProvider extends PanelProvider
@@ -108,7 +108,7 @@ class TenantPanelProvider extends PanelProvider
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-            fn () => view('version-indicator')
+            fn () => view('version-indicator') . (\App\Helpers\DesktopHelper::isDesktopApp() ? \Illuminate\Support\Facades\Blade::render('@livewire("desktop.sync-indicator")') : '')
         );
 
         FilamentView::registerRenderHook(
@@ -116,14 +116,20 @@ class TenantPanelProvider extends PanelProvider
             fn () => view('trial-indicator')
         );
 
-        if (app()->environment('demo')) {
-            FilamentView::registerRenderHook(
-                PanelsRenderHook::BODY_START,
-                fn (): View => view('donation-banner', [
-                    'link' => 'https://trakteer.id/sheenazien8/tip',
-                ]),
-            );
-        }
+        // Desktop/tablet header Back control (mobile uses the compact header back+crumbs).
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::PAGE_HEADER_ACTIONS_BEFORE,
+            fn (): string => view('filament.tenant.components.back-button')->render()
+        );
+
+        // Extra mobile safety net on standard Filament pages (resource create/edit/list, settings, etc.).
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::PAGE_START,
+            fn (): string => view('filament.tenant.components.mobile-page-nav')->render()
+        );
+
+        // Demo donation banner intentionally disabled — do not point to third-party tip links.
+        // Re-enable with your own sponsorship URL if needed.
 
         return $panel;
     }
@@ -149,6 +155,11 @@ class TenantPanelProvider extends PanelProvider
             ->authGuard('web')
             ->path('/member')
             ->login(TenantLogin::class)
+            ->passwordReset()
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+                fn (): string => Blade::render('@include(\'filament.tenant.components.login-back\')'),
+            )
             ->navigation(fn (NavigationBuilder $navigationBuilder) => $this->buildNavigation($navigationBuilder))
             ->discoverResources(in: app_path('Filament/Tenant/Resources'), for: 'App\\Filament\\Tenant\\Resources')
             ->discoverPages(in: app_path('Filament/Tenant/Pages'), for: 'App\\Filament\\Tenant\\Pages')
@@ -214,7 +225,10 @@ class TenantPanelProvider extends PanelProvider
             ]),
             NavigationGroup::make(__('Setting'))->collapsible(false)->items([
                 $this->generateNavigationItem(GeneralSetting::class),
+                $this->generateNavigationItem(\App\Filament\Tenant\Pages\ConnectedDevices::class),
                 $this->generateNavigationItem(Printer::class),
+                $this->generateNavigationItem(\App\Filament\Tenant\Pages\Activation::class),
+                $this->generateNavigationItem(\App\Filament\Tenant\Pages\SupportTickets::class),
             ]),
         ];
     }

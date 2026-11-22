@@ -3,6 +3,7 @@
 namespace App\Filament\Tenant\Pages;
 
 use App\Filament\Tenant\Pages\Traits\CartInteraction;
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Models\Tenants\CartItem as TenantsCartItem;
 use App\Models\Tenants\Product;
 use App\Traits\HasTranslatableResource;
@@ -10,7 +11,7 @@ use Filament\Pages\Page;
 
 class CartItem extends Page
 {
-    use CartInteraction, HasTranslatableResource;
+    use CartInteraction, HasPageNavigation, HasTranslatableResource;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 

@@ -4,20 +4,33 @@
 
 @endphp
 <div class="">
-  <div class="grid grid-cols-3 gap-x-4">
-    <div class="col-span-2">
+  {{-- Mobile / narrow screens: POS uses a custom layout, so Filament header crumbs are missing --}}
+  <div class="sticky top-0 z-30 mb-3 flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 lg:hidden">
+    <a href="/member"
+      class="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+      aria-label="{{ __('Back') }}">
+      <x-heroicon-o-arrow-left class="h-4 w-4" />
+      {{ __('Back') }}
+    </a>
+    <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ __('POS') }}</p>
+    <a href="/member" class="text-sm font-medium text-kipit-primary">{{ __('Home') }}</a>
+  </div>
+
+  <div class="grid grid-cols-1 gap-x-4 lg:grid-cols-3">
+    <div class="lg:col-span-2">
       {{ $this->table }}
     </div>
-    <div class="fixed right-0 h-screen w-1/3 overflow-y-scroll pb-10">
+    <div class="relative w-full overflow-y-auto pb-10 lg:fixed lg:right-0 lg:h-screen lg:w-1/3">
       <div class="mt-4 h-screen space-y-2 px-4">
         <div class="flex items-center justify-between" x-data="fullscreen">
           <p class="text-xl font-semibold">{{ __('Orders details') }}</p>
           <div class="flex items-center">
-            <div class="hidden items-center gap-x-2 xl:flex">
-              <a href="/member/sellings"
-                class="flex items-center justify-center gap-x-1 rounded-lg bg-gray-100 px-4 py-1 text-gray-500">
-                <x-heroicon-o-arrow-left class="h-4 w-4 text-gray-500" />
-                <p class="hidden lg:block">{{ __('Back') }} </p>
+            <div class="flex items-center gap-x-2">
+              <a href="/member"
+                class="flex items-center justify-center gap-x-1 rounded-lg bg-gray-100 px-3 py-1.5 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                aria-label="{{ __('Back') }}">
+                <x-heroicon-o-arrow-left class="h-4 w-4" />
+                <p class="text-sm">{{ __('Back') }}</p>
               </a>
 
               <button x-on:click="$dispatch('open-modal', {id: 'qr-scanner-modal'})" type="button"

@@ -6,6 +6,7 @@ use App\Features\Role;
 use App\Filament\Tenant\Resources\UserResource\Pages;
 use App\Models\Tenants\User;
 use App\Traits\HasTranslatableResource;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -36,10 +37,15 @@ class UserResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->email()
                     ->required(),
-                TextInput::make('profile.phone')
-                    ->label('Phone'),
-                TextInput::make('profile.address')
-                    ->label('Address'),
+                Group::make()
+                    ->relationship('profile')
+                    ->schema([
+                        TextInput::make('phone')
+                            ->label('Phone'),
+                        TextInput::make('address')
+                            ->label('Address'),
+                    ])
+                    ->columns(2),
                 TextInput::make('password')
                     ->password()
                     ->revealable(filament()->arePasswordsRevealable())
@@ -50,12 +56,18 @@ class UserResource extends Resource
                 TextInput::make('password_confirmation')
                     ->password()
                     ->revealable(filament()->arePasswordsRevealable())
-                    ->label('Confirm New Password'),
+                    ->label('Confirm New Password')
+                    ->dehydrated(false),
                 Select::make('roles')
                     ->label('Roles')
-                    ->default(1)
                     ->visible(hasFeatureAndPermission(Role::class))
-                    ->relationship('roles', 'name'),
+                    ->relationship(
+                        name: 'roles',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn ($query) => $query->where('guard_name', tenantPermissionGuard()),
+                    )
+                    ->preload()
+                    ->searchable(),
             ]);
     }
 
@@ -76,9 +88,10 @@ class UserResource extends Resource
                     ->label('Phone'),
                 TextColumn::make('profile.address')
                     ->label('Address'),
-                TextColumn::make('roles.0.name')
+                TextColumn::make('roles.name')
                     ->visible(hasFeatureAndPermission(Role::class))
-                    ->label('Role'),
+                    ->label('Role')
+                    ->badge(),
                 BooleanColumn::make('is_owner'),
             ])
             ->filters([

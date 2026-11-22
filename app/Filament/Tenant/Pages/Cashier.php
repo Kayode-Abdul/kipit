@@ -5,6 +5,7 @@ namespace App\Filament\Tenant\Pages;
 use App\Features\Member as FeaturesMember;
 use App\Features\Voucher;
 use App\Filament\Tenant\Pages\Traits\CartInteraction;
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Filament\Tenant\Pages\Traits\TableProduct;
 use App\Filament\Tenant\Resources\Traits\RefreshThePage;
 use App\Models\Tenants\About;
@@ -38,7 +39,7 @@ use App\Models\Tenants\Profile;
 
 class Cashier extends Page implements HasForms, HasTable
 {
-    use CartInteraction, HasTranslatableResource, RefreshThePage, TableProduct;
+    use CartInteraction, HasPageNavigation, HasTranslatableResource, RefreshThePage, TableProduct;
 
     public static ?string $label = 'POS';
 

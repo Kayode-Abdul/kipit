@@ -40,6 +40,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        // Desktop Filament uses the session provider, but Spatie permissions are
+        // resolved under the "desktop" guard so web and desktop RBAC stay separate.
+        'desktop' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
         'tenant' => [
             'driver' => 'session',
             'provider' => 'tenants',

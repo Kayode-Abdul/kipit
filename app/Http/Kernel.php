@@ -26,6 +26,7 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         DisableDebugbar::class,
+        \App\Http\Middleware\SecurityHeaders::class,
     ];
 
     /**
@@ -77,5 +78,6 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'method_and_permission' => \App\Http\Middleware\ResourcePerMethodMiddleware::class,
+        'maintenance.token' => \App\Http\Middleware\ProtectMaintenanceRoutes::class,
     ];
 }

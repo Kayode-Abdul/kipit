@@ -29,19 +29,25 @@ class UpdateChecker
 
     private function fetchAndCacheApiResponse(): ?array
     {
-        return cache()->remember('api_response', now()->addMinutes(60 * 8), function () {
+        $response = cache()->remember('api_response', now()->addMinutes(60 * 8), function () {
             try {
-                $response = Http::get($this->url);
+                $response = Http::timeout(3)->get($this->url);
 
                 if (! $response->ok()) {
-                    return null;
+                    return ['error' => true];
                 }
 
                 return $response->json();
-            } catch (\Exception $e) {
-                return null;
+            } catch (\Throwable $e) {
+                return ['error' => true];
             }
         });
+
+        if (isset($response['error'])) {
+            return null;
+        }
+
+        return $response;
     }
 
     public function getLatestVersion(): ?string

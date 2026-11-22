@@ -15,6 +15,14 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SubscriptionPlanResource extends Resource
 {
+    public static function canViewAny(): bool
+    {
+        /** @var \App\Models\Admin|null $admin */
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+
+        return $admin?->isAdmin() ?? false;
+    }
+
     protected static ?string $model = SubscriptionPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -46,16 +54,23 @@ class SubscriptionPlanResource extends Resource
                                     ->options(class_exists(\Symfony\Component\Intl\Currencies::class) ? \Symfony\Component\Intl\Currencies::getNames() : ['USD' => 'US Dollar', 'IDR' => 'Indonesian Rupiah', 'NGN' => 'Nigerian Naira', 'EUR' => 'Euro'])
                                     ->searchable()
                                     ->required()
-                                    ->default('USD'),
+                                    ->default('NGN'),
                                 Forms\Components\TextInput::make('price')
                                     ->required()
                                     ->numeric()
                                     ->default(0.00),
                             ])
                             ->columns(2)
-                            ->defaultItems(1),
+                            ->defaultItems(1)
+                            ->addActionLabel('Add currency price')
+                            ->reorderable(false),
                     ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('prices');
     }
 
     public static function table(Table $table): Table

@@ -31,4 +31,21 @@ _ide_helper.php
 tasks/
 .mcp.json
 opencode.json
-version.txt
+
+# Desktop build artifacts (upload installers to the server separately; GitHub 100MB limit)
+/dist/
+/*.dmg
+/*.blockmap
+/public/downloads/desktop/*.dmg
+/public/downloads/desktop/*.exe
+/public/build.zip
+/build.log
+/test_webhook.php
+
+# Local tenant SQLite / runtime flags (do not commit shop data)
+/database/kipit_*
+/kipit.migrated_v3
+/public/kipit.migrated_v3
+/kipit.lock
+/public/kipit.lock
+**/.DS_Store

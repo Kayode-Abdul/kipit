@@ -16,15 +16,13 @@ class DesktopHelper
             return true;
         }
 
-        if (defined('NATIVEPHP_RUNNING') || class_exists(\Native\Laravel\Facades\Window::class)) {
-            if (getenv('NATIVEPHP_PORT') || getenv('NATIVE_PHP') || str_contains(base_path(), 'NativePHP') || str_contains(base_path(), 'Kipit.app')) {
-                return true;
-            }
+        if (defined('NATIVEPHP_RUNNING')) {
+            return true;
         }
 
         if (isset($_SERVER['HTTP_USER_AGENT'])
-            && (strpos($_SERVER['HTTP_USER_AGENT'], 'Electron') !== false
-                || strpos($_SERVER['HTTP_USER_AGENT'], 'kipit') !== false)) {
+            && (strripos($_SERVER['HTTP_USER_AGENT'], 'Electron') !== false
+                || strripos($_SERVER['HTTP_USER_AGENT'], 'kipit') !== false)) {
             return true;
         }
 
@@ -63,7 +61,26 @@ class DesktopHelper
 
         $flagPath = static::getConfigDir() . DIRECTORY_SEPARATOR . 'setup_complete';
 
-        return file_exists($flagPath);
+        if (!file_exists($flagPath)) {
+            return false;
+        }
+
+        // Safety check: if setup was marked complete but no users exist,
+        // the data was lost or never seeded. Reset and re-run setup.
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('users')
+                && \Illuminate\Support\Facades\DB::table('users')->count() === 0) {
+                @unlink($flagPath);
+                $firstLoginPath = static::getConfigDir() . DIRECTORY_SEPARATOR . 'first_login_complete';
+                @unlink($firstLoginPath);
+
+                return false;
+            }
+        } catch (\Throwable $e) {
+            // If DB check fails, trust the flag
+        }
+
+        return true;
     }
 
     /**

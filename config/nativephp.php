@@ -4,7 +4,7 @@ return [
     /**
      * The version of your app.
      */
-    'version' => env('NATIVEPHP_APP_VERSION', '1.0.0'),
+    'version' => env('NATIVEPHP_APP_VERSION', '1.3.0'),
 
     /**
      * The ID of your application.
@@ -76,12 +76,5 @@ return [
         ],
     ],
 
-    'queue_workers' => [
-        'default' => [
-            'queues' => ['default'],
-            'memory_limit' => 128,
-            'timeout' => 60,
-            'sleep' => 3,
-        ],
-    ],
+    'queue_workers' => [],
 ];

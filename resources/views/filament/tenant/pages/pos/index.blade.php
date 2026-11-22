@@ -23,17 +23,17 @@
       <div class="max-w-4xl mx-auto">
 
         <div class="flex items-center justify-between p-4">
-          <a href="/member/sellings" class="text-gray-800">
+          <a href="/member" class="text-gray-800" aria-label="{{ __('Back') }}" title="{{ __('Back to Dashboard') }}">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </a>
-          <h1 class="text-xl font-semibold">Cashier</h1>
-          <button class="text-gray-800">
+          <h1 class="text-xl font-semibold">{{ __('Cashier') }}</h1>
+          <a href="/member" class="text-gray-800" aria-label="{{ __('Menu') }}" title="{{ __('Dashboard') }}">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-          </button>
+          </a>
         </div>
 
         <!-- Update the search input with loading state -->

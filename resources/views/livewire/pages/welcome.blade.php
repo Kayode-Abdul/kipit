@@ -47,16 +47,24 @@ $mainFeatures = [
     ],
     [
         'title' => 'Multi-Tenant & Roles',
-        'description' => 'Manage multiple storefronts from a single account and assign specific permissions to cashiers, managers, and admins.',
+        'description' => 'Run up to two shops on free trial from one email, then unlock more with an activation key. Assign permissions to cashiers, managers, and admins.',
         'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
             </svg>',
     ],
+    // Mobile app feature — restore when a mobile build ships
+    // [
+    //     'title' => 'Cross-Platform Sync',
+    //     'description' => 'Access your POS anywhere. Available as a web app, a native desktop application, and a mobile app for on-the-go management.',
+    //     'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7">
+    //           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+    //         </svg>',
+    // ],
     [
         'title' => 'Cross-Platform Sync',
-        'description' => 'Access your POS anywhere. Available as a web app, a native desktop application, and a mobile app for on-the-go management.',
+        'description' => 'Access your POS anywhere. Available as a web app and native desktop applications for Windows and macOS.',
         'icon' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" />
             </svg>',
     ],
     [
@@ -78,7 +86,27 @@ $mainFeatures = [
 state([
     'menu' => $menu,
     'mainFeatures' => $mainFeatures,
+    'subscriberEmail' => '',
+    'subscribed' => false,
 ]);
+
+$subscribe = function () {
+    $this->validate([
+        'subscriberEmail' => [
+            'required',
+            'email',
+            \Illuminate\Validation\Rule::unique(\App\Models\Subscriber::class, 'email'),
+        ],
+    ], [
+        'subscriberEmail.unique' => 'This email is already subscribed.',
+    ]);
+    \App\Models\Subscriber::create([
+        'email' => $this->subscriberEmail,
+        'is_active' => true,
+    ]);
+    $this->subscribed = true;
+    $this->subscriberEmail = '';
+};
 
 ?>
 
@@ -95,6 +123,7 @@ state([
 
           <div class="relative items-center hidden px-4 mt-2 space-x-5 font-medium leading-10 md:flex md:flex-grow-0 md:flex-shrink-0 md:mt-0 md:text-right lg:flex-grow-0 lg:flex-shrink-0">
             <a href="/download" class="font-medium text-gray-500 hover:text-gray-900">Download</a>
+            <a href="/blog" class="font-medium text-gray-500 hover:text-gray-900">Blog</a>
             <a href="/pricing" class="font-medium text-kipit-primary hover:text-gray-900">Pricing</a>
             <a href="/member/login"
               class="bg-gray-100 text-gray-400 md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-gray-100 focus:text-gray-700 hover:text-gray-700"
@@ -115,6 +144,7 @@ state([
                 <!-- Links -->
                 <div class="flex flex-col mt-8">
                   <a href="/download" class="px-6 py-3 text-sm font-medium">Download</a>
+                  <a href="/blog" class="px-6 py-3 text-sm font-medium">Blog</a>
                   <a href="/pricing" class="px-6 py-3 text-sm font-medium">Pricing</a>
                   <a href="/member/login" class="px-6 py-3 text-sm font-medium">Login</a>
                   <a href="{{ route('auth.register') }}" class="px-6 py-3 text-sm font-medium">Register POS</a>
@@ -129,17 +159,17 @@ state([
         </div>
       </div>
     </header>
+    {{-- Video modal (restore with Watch Video button when a demo video is ready)
     <div x-ref="overlay" class="fixed hidden z-40 w-screen h-screen inset-0 bg-gray-900 bg-opacity-60"></div>
-    <!-- The dialog -->
     <div x-ref="dialog"
       class="hidden fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-auto bg-white rounded-md px-8 py-6 space-y-5 drop-shadow-lg">
-      <!--- right Close button -->
       <div class="w-full flex justify-end cursor-pointer" x-on:click="$refs.overlay.classList.add('hidden'); $refs.dialog.classList.add('hidden');">
         <button class="text-gray-600">X</button>
       </div>
       <iframe width="1024" height="576"
         src="https://www.youtube.com/embed/O5rYsoAZ_sk?si=kPhn1AxNqTgQR3Sf&amp;controls=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
     </div>
+    --}}
 
 
     <main class="w-full relative">
@@ -157,12 +187,19 @@ state([
             <div class="mt-6 sm:mt-8">
               <div class="flex md:flex-row flex-col md:space-x-5 md:space-y-0 space-y-5 lg:justify-start justify-center">
                 <a href="/download" class="bg-kipit-primary text-white md:w-auto w-full px-8 py-4 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-kipit-primary">Download Now</a>
+                {{-- Watch Video (restore when a demo video is ready)
                 <a href="#_"
                   class="bg-gray-800 text-white px-8 py-4 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-gray-800"
                   x-on:click="$refs.overlay.classList.remove('hidden'); $refs.dialog.classList.remove('hidden');"
                 >
                   <span class="-ml-2 mr-3"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg></span>
                   <span>Watch Video</span>
+                </a>
+                --}}
+                <a href="/getting-started"
+                  class="bg-gray-800 text-white px-8 py-4 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-gray-800"
+                >
+                  <span>Getting Started</span>
                 </a>
               </div>
             </div>
@@ -183,7 +220,7 @@ state([
           </div>
           <div class="w-full flex items-end max-w-md h-auto relative">
 
-            <img src="/assets/images/product-management.jpeg" class="relative h-[40rem] lg:left-20">
+            <img src="/assets/images/product-management.png" class="relative h-[40rem] lg:left-20">
           </div>
         </div>
       </div>
@@ -192,7 +229,7 @@ state([
   <section id="about" class="bg-gray-800 text-white py-32">
     <div class="lg:max-w-3xl mx-auto text-center px-5 lg:px-0">
       <p class="text-4xl font-extrabold">About kipit</p>
-      <p class="text-lg mt-5">Kipit is an all-in-one Point of Sale (POS) solution built for modern businesses. Available natively on Windows, macOS, Android, and the web, it empowers you to manage product inventory, track detailed sales analytics, print receipts via USB ESC/POS, operate multiple stores seamlessly with role-based access control, and even work completely offline when you lose your internet connection. Start with a free 30-day trial to experience full features, then purchase an access key for permanent, unrestricted access. <br><br>Ready to get started? <a href="/download" class="text-kipit-primary underline hover:text-white transition-colors">Download kipit</a> for your device today.</p>
+       <p class="text-lg mt-5">Kipit is an all-in-one Point of Sale (POS) solution built for modern businesses. Available natively on Windows, macOS, and the web. it empowers you to manage product inventory, track detailed sales analytics, print receipts via USB ESC/POS, operate multiple stores seamlessly with role-based access control, and even work completely offline when you lose your internet connection. Start with a free 30-day trial to experience full features, then purchase an access key for permanent, unrestricted access. <br><br>Ready to get started? <a href="/download" class="text-kipit-primary underline hover:text-white transition-colors">Download kipit</a> for your device today.</p>
     </div>
   </section>
   <section id="product-menu" class="py-10 my-10 text-gray-400">
@@ -257,23 +294,92 @@ state([
     <div class="bg-kipit-primary text-center rounded-2xl my-20 p-10">
       <p class="font-extrabold text-3xl">Get notified when we have updates</p>
       <p class="mt-5">Don't miss our latest updates, register your email now.</p>
-      <form action="#" class="mt-5 sm:mx-auto sm:flex sm:max-w-lg">
+      <form wire:submit="subscribe" class="mt-5 sm:mx-auto sm:flex sm:max-w-lg">
         <div class="min-w-0 flex-1">
           <label for="cta-email" class="sr-only">Email address</label>
-          <input id="cta-email" type="email" class="block w-full rounded-md border border-transparent px-5 py-3 text-base text-gray-900 placeholder-gray-500 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary" placeholder="Enter your email">
+          <input id="cta-email" type="email" wire:model="subscriberEmail" required class="block w-full rounded-md border border-transparent px-5 py-3 text-base text-gray-900 placeholder-gray-500 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary" placeholder="Enter your email">
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-3">
-          <button type="submit" class="block w-full rounded-md border border-transparent bg-orange-600 px-5 py-3 text-base font-medium text-white shadow hover:bg-kipit-primary focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary sm:px-10">Notify me</button>
+          <button type="submit" class="block w-full rounded-md border border-transparent bg-orange-600 px-5 py-3 text-base font-medium text-white shadow hover:bg-kipit-primary focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary sm:px-10">
+            <span wire:loading.remove wire:target="subscribe">Notify me</span>
+            <span wire:loading wire:target="subscribe">Saving...</span>
+          </button>
         </div>
       </form>
+      @error('subscriberEmail') <span class="text-red-200 text-sm mt-2 block">{{ $message }}</span> @enderror
+      @if($subscribed) <span class="text-green-200 text-sm mt-2 block font-bold">Successfully subscribed! We will notify you of any updates.</span> @endif
     </div>
   </section>
-  <section id="footer" class="bg-gray-800 text-white py-10 flex justify-center gap-x-3">
-    <p>kipit made with </p>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-      <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-    </svg>
-  </section>
+  <footer class="bg-gray-900 border-t border-gray-800 text-gray-300 py-12 lg:py-16">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12 lg:gap-8">
+        <!-- Brand & Description -->
+        <div class="md:col-span-1">
+          <a href="/" class="flex items-center gap-x-2 text-white font-bold text-2xl mb-4">
+            <img src="{{ env('APP_URL') }}/assets/logo/image.png" class="h-8" alt="Kipit POS Logo"> Kipit POS
+          </a>
+          <p class="text-sm text-gray-400 mb-6">
+            The ultimate multi-tenant POS solution designed to streamline your business, manage inventory, and track sales everywhere you go.
+          </p>
+          <div class="flex space-x-4">
+            <a href="https://www.facebook.com/kipit_pos" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors">
+              <span class="sr-only">Facebook</span>
+              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
+              </svg>
+            </a>
+            <a href="https://www.instagram.com/kipit_pos" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors">
+              <span class="sr-only">Instagram</span>
+              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Product Links -->
+        <div class="md:col-span-1 md:ml-auto">
+          <h3 class="text-sm font-semibold text-white tracking-wider uppercase mb-4">Product</h3>
+          <ul class="space-y-3">
+            <li><a href="/download" class="text-gray-400 hover:text-white transition-colors">Download</a></li>
+            <li><a href="/pricing" class="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+            <li><a href="#main-feature" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
+            <li><a href="{{ route('auth.register') }}" class="text-gray-400 hover:text-white transition-colors">Register POS</a></li>
+          </ul>
+        </div>
+  
+        <!-- Support Links -->
+        <div class="md:col-span-1 md:ml-auto">
+          <h3 class="text-sm font-semibold text-white tracking-wider uppercase mb-4">Support</h3>
+            <ul class="space-y-3">
+              <li><a href="/getting-started" class="text-gray-400 hover:text-white transition-colors">Getting Started</a></li>
+              <li><a href="/blog" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+              <li><a href="/help" class="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
+              <li><a href="/api-docs" class="text-gray-400 hover:text-white transition-colors">API Documentation</a></li>
+            <li><a href="/contact" class="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
+            <li><a href="/status" class="text-gray-400 hover:text-white transition-colors">System Status</a></li>
+          </ul>
+        </div>
+  
+        <!-- Legal Links -->
+        <div class="md:col-span-1 md:ml-auto">
+          <h3 class="text-sm font-semibold text-white tracking-wider uppercase mb-4">Legal</h3>
+          <ul class="space-y-3">
+            <li><a href="/privacy" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
+            <li><a href="/terms" class="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+            <li><a href="/cookies" class="text-gray-400 hover:text-white transition-colors">Cookie Policy</a></li>
+            <li><a href="/security" class="text-gray-400 hover:text-white transition-colors">Security</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="mt-12 pt-8 border-t border-gray-800 flex flex-col items-center gap-4 md:gap-8">
+        <p class="text-sm text-gray-400 text-center">
+          &copy; {{ date('Y') }} Kipit POS. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
 
   <!-- Floating Sticky Note -->
   <a href="/pricing" class="fixed bottom-6 right-6 bg-amber-300 hover:bg-amber-400 text-amber-900 shadow-2xl rounded-sm p-4 w-56 transform rotate-3 hover:rotate-0 transition-all z-50 border-t-8 border-amber-400 group cursor-pointer block before:absolute before:-bottom-1 before:right-0 before:w-full before:h-1 before:bg-black before:opacity-10 before:rounded-full">

@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class RoleResource extends Resource
 {
@@ -29,7 +30,8 @@ class RoleResource extends Resource
                     ->translateLabel()
                     ->required(),
                 CheckboxList::make('webPermissions')
-                    ->label('Web app permissions')
+                    ->label(__('Web app permissions'))
+                    ->helperText(__('Permissions for the web panel (guard: web). Separate from desktop.'))
                     ->bulkToggleable()
                     ->columns(4)
                     ->relationship(
@@ -38,16 +40,29 @@ class RoleResource extends Resource
                     )
                     ->noSearchResultsMessage('No permissions found.')
                     ->searchable(),
-                CheckboxList::make('mobilePermissions')
-                    ->label('Mobile app permissions')
+                CheckboxList::make('desktopPermissions')
+                    ->label(__('Desktop app permissions'))
+                    ->helperText(__('Permissions for the desktop app (guard: desktop). Stored locally and enforced offline from the device SQLite database; changes sync when online.'))
                     ->bulkToggleable()
                     ->columns(4)
                     ->relationship(
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn ($query) => $query->where('guard_name', 'sanctum')
+                        modifyQueryUsing: fn ($query) => $query->where('guard_name', 'desktop')
                     )
                     ->noSearchResultsMessage('No permissions found.')
                     ->searchable(),
+                // Mobile app permissions (guard: sanctum) — kept for future use; do not delete.
+                // CheckboxList::make('mobilePermissions')
+                //     ->label(__('Mobile app permissions'))
+                //     ->helperText(__('API/token permissions (guard: sanctum). Used by the mobile/API client. Separate from web/desktop UI permissions.'))
+                //     ->bulkToggleable()
+                //     ->columns(4)
+                //     ->relationship(
+                //         titleAttribute: 'name',
+                //         modifyQueryUsing: fn ($query) => $query->where('guard_name', 'sanctum')
+                //     )
+                //     ->noSearchResultsMessage('No permissions found.')
+                //     ->searchable(),
             ])->columns(1);
     }
 
@@ -78,6 +93,12 @@ class RoleResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        // List web roles only; desktop permissions are edited on the same role via desktopPermissions.
+        return parent::getEloquentQuery()->where('guard_name', 'web');
     }
 
     public static function getPages(): array

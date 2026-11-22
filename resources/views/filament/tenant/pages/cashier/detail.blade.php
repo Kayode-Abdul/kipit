@@ -23,7 +23,7 @@
        title: '@lang('Note')'
       })">
     <p>{{ __('Note') }}</p>
-    <div>{!! $cartDetail['note'] ?? '-' !!}</div>
+    <div>{{ $cartDetail['note'] ?? '-' }}</div>
   </div>
   @if($about && $about->business_type == 'fnb')
     <div class="flex justify-between hover:underline cursor-pointer"
@@ -31,7 +31,7 @@
           id: 'modal-selected-table'
         })">
       <p>{{ __('Table') }}</p>
-      <div>{!! $cartDetail['table_id'] ?? '-' !!}</div>
+      <div>{{ $cartDetail['table_id'] ?? '-' }}</div>
     </div>
   @endif
   @feature(Voucher::class)

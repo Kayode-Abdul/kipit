@@ -21,10 +21,13 @@ class ListPermissions extends ListRecords
     {
         return [
             'all' => Tab::make(),
-            'web' => Tab::make()
+            'web' => Tab::make(__('Web'))
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('guard_name', 'web')),
-            'mobile app' => Tab::make()
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('guard_name', 'sanctum')),
+            'desktop' => Tab::make(__('Desktop'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('guard_name', 'desktop')),
+            // Mobile app tab (sanctum) — kept for future use; do not delete.
+            // 'mobile app' => Tab::make(__('Mobile app'))
+            //     ->modifyQueryUsing(fn (Builder $query) => $query->where('guard_name', 'sanctum')),
         ];
     }
 }

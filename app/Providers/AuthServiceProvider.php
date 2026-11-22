@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\Admin;
 use App\Models\Tenants\Category;
 use App\Models\Tenants\Member;
 use App\Models\Tenants\PaymentMethod;
@@ -76,36 +75,64 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
-        Gate::after(function (User|Admin $user, $ability) {
+        Gate::after(function ($user, string $ability, ?bool $result) {
+            // Central Admin users are not subject to tenant RBAC overrides.
+            if (! $user instanceof User) {
+                return null;
+            }
+
             if ($user->is_owner) {
                 return true;
             }
-            if (in_array($ability, $this->defaultAbility)) {
-                return true;
-            }
-            $guard = 'web';
-            if (Auth::getDefaultDriver() === 'sanctum') {
-                $guard = 'sanctum';
+
+            // Standard CRUD abilities are decided by policies — never force-allow here.
+            if (in_array($ability, $this->defaultAbility, true)) {
+                return null;
             }
 
+            // Desktop uses its own permission set from the local DB (offline-capable).
+            $guard = function_exists('tenantPermissionGuard')
+                ? tenantPermissionGuard()
+                : (Auth::getDefaultDriver() === 'sanctum' ? 'sanctum' : 'web');
             $role = $user->roles->first();
             if (! $role) {
                 return false;
             }
-            $permissions = $role->permissions()->where('guard_name', $guard)->pluck('name')->toArray();
-            if (! in_array($ability, $permissions)) {
-                return false;
-            }
 
-            return true;
+            $permissions = $role->permissions()
+                ->where('guard_name', $guard)
+                ->pluck('name')
+                ->toArray();
+
+            return in_array($ability, $permissions, true);
         });
 
-        ResetPassword::createUrlUsing(function ($notifiable, $token) {
-            /** @var Tenant $tenant */
-            $tenant = Tenant::whereHas('user', fn ($q) => $q->where('email', $notifiable->getEmailForPasswordReset()))->first();
-            $domaaain = $tenant->domains()->first()->domain;
+        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
+            $email = $notifiable->getEmailForPasswordReset();
 
-            return "https://$domaaain/reset-password/$token?email=".urlencode($notifiable->getEmailForPasswordReset());
+            try {
+                if (\Filament\Facades\Filament::getCurrentPanel()) {
+                    return \Filament\Facades\Filament::getResetPasswordUrl($token, $notifiable);
+                }
+            } catch (\Throwable $e) {
+                // Fall through to domain-based URL.
+            }
+
+            $tenant = tenant();
+            if (! $tenant) {
+                $host = request()->getHost();
+                $tenant = Tenant::query()
+                    ->whereHas('domains', fn ($q) => $q->where('domain', $host))
+                    ->first();
+            }
+
+            $domain = $tenant?->domains()->first()?->domain ?? request()->getHost();
+            $scheme = request()->getScheme() ?: 'https';
+
+            return "{$scheme}://{$domain}/member/password-reset/reset?".http_build_query([
+                'token' => $token,
+                'email' => $email,
+            ]);
         });
     }
 }

@@ -5,40 +5,45 @@ use function Livewire\Volt\state;
 
 layout('livewire.components.layouts.guest');
 
+// Single source of truth — keep in sync with package.json / desktop builds.
+$appVersion = trim((string) (file_exists(base_path('version.txt')) ? file_get_contents(base_path('version.txt')) : '0'));
+if ($appVersion === '') {
+    $appVersion = '0';
+}
+//**** update  this on production ****
+//$desktopDir = base_path('../public_html/downloads/desktop');
+$desktopDir = public_path('downloads/desktop');
+$macFile = "kipit-{$appVersion}-mac.dmg";
+$winFile = "kipit-{$appVersion}-setup.exe";
+$macReady = is_file($desktopDir.DIRECTORY_SEPARATOR.$macFile);
+$winReady = is_file($desktopDir.DIRECTORY_SEPARATOR.$winFile);
+
 state([
+    'appVersion' => $appVersion,
     'downloads' => [
         [
-            'platform' => 'Windows',
-            'version' => 'v1.0.0',
-            'description' => 'Download Kipit for Windows 10 and 11. Includes all point of sale and inventory management features.',
-            'icon' => '<svg class="w-12 h-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M0 93.7l183.6-25.3v177.4H0V93.7zm0 324.6l183.6 25.3V268.4H0v149.9zm203.8 28L448 480V268.4H203.8v177.9zm0-380.6v180.1H448V32L203.8 65.7z"/></svg>',
-            'links' => [
-                ['label' => 'Download .zip (Portable Windows App)', 'url' => '/downloads/desktop/kipit-1.0.0-win.zip', 'primary' => true],
-            ],
-            'requirements' => 'Requires Windows 10 or later. Visual C++ Redistributable (2015-2022) may be required.'
-        ],
-        [
             'platform' => 'macOS',
-            'version' => 'v1.0.0',
-            'description' => 'Download Kipit for macOS. Optimized for Apple Silicon (M1/M2/M3) and Intel Macs.',
+            'version' => 'v'.$appVersion,
+            'available' => $macReady,
+            'description' => 'Download Kipit POS for macOS. Includes all point of sale and inventory management features.',
             'icon' => '<svg class="w-12 h-12 text-gray-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>',
-            'links' => [
-                ['label' => 'Download (Apple Silicon M1/M2/M3)', 'url' => '/downloads/desktop/kipit-1.0.0-mac-arm64.zip', 'primary' => true],
-                ['label' => 'Download (Intel Mac)', 'url' => '/downloads/desktop/kipit-1.0.0-mac-x64.zip', 'primary' => false],
-            ],
-            'requirements' => 'Requires macOS 11.0 (Big Sur) or later.'
+            'links' => $macReady
+                ? [['label' => 'Download for macOS', 'url' => '/downloads/desktop/'.$macFile, 'primary' => true]]
+                : [['label' => 'macOS build coming soon', 'url' => '#', 'primary' => false]],
+            'requirements' => 'Requires macOS 12.0 (Monterey) or later. Apple Silicon Macs can run this installer via Rosetta.',
         ],
         [
-            'platform' => 'Android',
-            'version' => 'v1.0.0',
-            'description' => 'Take Kipit on the go. Manage your business, process sales, and view reports from your mobile device.',
-            'icon' => '<svg class="w-12 h-12 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg>',
-            'links' => [
-                ['label' => 'Download APK (GitHub)', 'url' => 'https://github.com/kipit/kipit_flutter/releases', 'primary' => true],
-            ],
-            'requirements' => 'Requires Android 8.0 (Oreo) or later.'
+            'platform' => 'Windows',
+            'version' => 'v'.$appVersion,
+            'available' => $winReady,
+            'description' => 'Download Kipit POS for Windows 10 and 11. Includes all point of sale and inventory management features.',
+            'icon' => '<svg class="w-12 h-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M0 93.7l183.6-25.3v177.4H0V93.7zm0 324.6l183.6 25.3V268.4H0v149.9zm203.8 28L448 480V268.4H203.8v177.9zm0-380.6v180.1H448V32L203.8 65.7z"/></svg>',
+            'links' => $winReady
+                ? [['label' => 'Download for Windows', 'url' => '/downloads/desktop/'.$winFile, 'primary' => true]]
+                : [['label' => 'Windows build coming soon', 'url' => '#', 'primary' => false]],
+            'requirements' => 'Requires Windows 10 or later. Single NSIS setup wizard. Visual C++ Redistributable (2015-2022) may be required.',
         ],
-    ]
+    ],
 ]);
 
 ?>
@@ -57,6 +62,8 @@ state([
 
           <div class="relative items-center hidden px-4 mt-2 space-x-5 font-medium leading-10 md:flex md:flex-grow-0 md:flex-shrink-0 md:mt-0 md:text-right lg:flex-grow-0 lg:flex-shrink-0">
             <a href="/download" class="font-medium text-kipit-primary hover:text-orange-700">Download</a>
+            <a href="/blog" class="font-medium text-gray-500 hover:text-gray-900">Blog</a>
+            <a href="/pricing" class="font-medium text-gray-500 hover:text-gray-900">Pricing</a>
             <a href="/member/login"
               class="bg-gray-100 text-gray-400 md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-gray-100 focus:text-gray-700 hover:text-gray-700"
             >Login</a>
@@ -75,6 +82,8 @@ state([
               <div class="fixed inset-y-0 right-0 w-64 bg-gray-800 text-white flex-col justify-between z-40 hidden" x-ref="menu">
                 <div class="flex flex-col mt-8">
                   <a href="/download" class="px-6 py-3 text-sm font-medium text-kipit-primary">Download</a>
+                  <a href="/blog" class="px-6 py-3 text-sm font-medium">Blog</a>
+                  <a href="/pricing" class="px-6 py-3 text-sm font-medium">Pricing</a>
                   <a href="/member/login" class="px-6 py-3 text-sm font-medium">Login</a>
                   <a href="{{ route('auth.register') }}" class="px-6 py-3 text-sm font-medium">Register POS</a>
                 </div>
@@ -132,14 +141,18 @@ state([
               </div>
               <div class="px-8 pb-8 pt-2 bg-gray-50 flex flex-col gap-y-3 mt-auto border-t border-gray-100">
                 @foreach($download['links'] as $link)
-                  <a href="{{ $link['url'] }}" 
-                     @if(str_contains($link['url'], 'github')) target="_blank" @endif
-                     class="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm {{ $link['primary'] ? 'text-white bg-kipit-primary hover:bg-orange-600 focus:ring-2 focus:ring-offset-2 focus:ring-kipit-primary' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500' }} transition-colors duration-200">
-                    {{ $link['label'] }}
-                    @if($link['primary'])
+                  @if(($download['available'] ?? false) && ($link['url'] ?? '#') !== '#')
+                    <a href="{{ $link['url'] }}"
+                       @if(str_contains($link['url'], 'github')) target="_blank" @endif
+                       class="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-kipit-primary hover:bg-orange-600 focus:ring-2 focus:ring-offset-2 focus:ring-kipit-primary transition-colors duration-200">
+                      {{ $link['label'] }}
                       <svg class="ml-2 -mr-1 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    @endif
-                  </a>
+                    </a>
+                  @else
+                    <span class="w-full flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-500 bg-white cursor-not-allowed">
+                      {{ $link['label'] }}
+                    </span>
+                  @endif
                 @endforeach
               </div>
             </div>
@@ -150,7 +163,7 @@ state([
 
     <!-- Footer -->
     <section id="footer" class="bg-gray-800 text-white py-10 flex justify-center gap-x-3 mt-auto">
-      <p>kipit made with </p>
+      <p>Kipit POS made with </p>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
         <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
       </svg>

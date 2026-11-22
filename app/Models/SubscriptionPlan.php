@@ -16,6 +16,12 @@ class SubscriptionPlan extends Model
         'duration_in_months' => 'integer',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = config('tenancy.database.central_connection', 'mysql');
+    }
+
     public function prices()
     {
         return $this->hasMany(SubscriptionPlanPrice::class);

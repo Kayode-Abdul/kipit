@@ -15,6 +15,14 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TransactionResource extends Resource
 {
+    public static function canViewAny(): bool
+    {
+        /** @var \App\Models\Admin|null $admin */
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+
+        return $admin?->isAdmin() ?? false;
+    }
+
     protected static ?string $model = Transaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

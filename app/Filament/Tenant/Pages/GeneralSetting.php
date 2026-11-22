@@ -2,6 +2,7 @@
 
 namespace App\Filament\Tenant\Pages;
 
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Filament\Tenant\Resources\Traits\RefreshThePage;
 use App\Models\Tenants\About;
 use App\Models\Tenants\Profile;
@@ -31,7 +32,8 @@ use Laravel\Pennant\Feature;
 
 class GeneralSetting extends Page implements HasActions, HasForms
 {
-    use HasTranslatableResource,
+    use HasPageNavigation,
+        HasTranslatableResource,
         InteractsWithFormActions,
         InteractsWithForms,
         RefreshThePage;
@@ -79,7 +81,8 @@ class GeneralSetting extends Page implements HasActions, HasForms
             'stock-opname' => Feature::active('stock-opname'),
             'voucher' => Feature::active('voucher'),
             'pos-v2' => Feature::active('pos-v2'),
-            'product-import' => Feature::active('product-import')
+            'product-import' => Feature::active('product-import'),
+            'product-expired' => Feature::active('product-expired'),
         ];
 
         $user = auth()->user();
@@ -146,6 +149,7 @@ class GeneralSetting extends Page implements HasActions, HasForms
                                 Checkbox::make('voucher')->inline(),
                                 Checkbox::make('pos-v2')->label("POS V2")->inline(),
                                 Checkbox::make('product-import')->inline(),
+                                Checkbox::make('product-expired')->label("Product Expiry")->inline(),
                             ]),
                             Actions::make([
                                 Action::make('Save')
@@ -186,6 +190,7 @@ class GeneralSetting extends Page implements HasActions, HasForms
         $filename = $image->getFilename();
 
         $image->storePubliclyAs('', $filename, $tmpDisk);
+        \App\Services\FileEncryptionService::encryptStoredFile($filename, $tmpDisk);
 
         $fullUrl = Storage::disk($tmpDisk)->url($filename);
 

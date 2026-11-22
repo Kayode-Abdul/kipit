@@ -2,6 +2,7 @@
 
 namespace App\Filament\Tenant\Pages;
 
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Traits\HasTranslatableResource;
 use Filament\Actions\Action;
 use Filament\Actions\Contracts\HasActions;
@@ -15,7 +16,7 @@ use Filament\Pages\Page;
 
 class Printer extends Page implements HasActions, HasForms
 {
-    use HasTranslatableResource;
+    use HasPageNavigation, HasTranslatableResource;
     use InteractsWithFormActions;
 
     protected static ?string $navigationIcon = 'heroicon-o-printer';

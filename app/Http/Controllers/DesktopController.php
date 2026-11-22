@@ -90,6 +90,18 @@ class DesktopController extends Controller
                 }
             }
 
+            // Mirror web TenantLogin: ensure a profile row exists for settings UI.
+            try {
+                $user->profile()->updateOrCreate(
+                    ['user_id' => $user->getKey()],
+                    ['timezone' => $user->profile?->timezone ?? 'Africa/Lagos'],
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning(
+                    'Failed to bootstrap desktop user profile: '.$e->getMessage()
+                );
+            }
+
             $request->session()->regenerate();
 
             return redirect()->intended('/member');

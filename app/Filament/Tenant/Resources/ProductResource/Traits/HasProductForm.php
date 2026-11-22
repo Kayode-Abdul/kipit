@@ -30,6 +30,8 @@ trait HasProductForm
         return FileUpload::make('hero_images')
             ->disk(config('filesystems.upload_disk'))
             ->image()
+            ->maxSize(2048) // 2MB limit
+            ->optimize('webp') // Compress and convert to webp automatically
             ->translateLabel()
             ->imageResizeMode('cover')
             ->imageCropAspectRatio('1:1')

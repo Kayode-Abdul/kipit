@@ -25,6 +25,7 @@ class ManageSettings extends Page
     {
         $this->data = [
             'free_trial_days' => (int) SystemSetting::get('free_trial_days', 30),
+            'free_trial_max_shops' => (int) SystemSetting::get('free_trial_max_shops', 2),
             'access_key_price' => (int) SystemSetting::get('access_key_price', 50000),
         ];
     }
@@ -39,6 +40,12 @@ class ManageSettings extends Page
                     ->integer()
                     ->required()
                     ->minValue(0),
+                TextInput::make('free_trial_max_shops')
+                    ->label('Max Shops on Free Trial (per email)')
+                    ->helperText('How many unactivated shops one email can register during free trial. Activated shops do not count toward this limit.')
+                    ->integer()
+                    ->required()
+                    ->minValue(1),
                 TextInput::make('access_key_price')
                     ->label('Access Key Price (NGN)')
                     ->helperText('The price of the access key when purchased through Paystack.')
@@ -63,6 +70,7 @@ class ManageSettings extends Page
         $data = $this->form->getState();
 
         SystemSetting::set('free_trial_days', (int) $data['free_trial_days']);
+        SystemSetting::set('free_trial_max_shops', (int) $data['free_trial_max_shops']);
         SystemSetting::set('access_key_price', (int) $data['access_key_price']);
 
         Notification::make()

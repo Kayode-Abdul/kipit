@@ -151,6 +151,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Shared-hosting maintenance route token
+    |--------------------------------------------------------------------------
+    |
+    | Required as ?token= or X-Maintenance-Token for /__migrate, /__backup,
+    | /__queue, and /clear-cache. Leave empty to keep those routes disabled.
+    |
+    */
+
+    'maintenance_token' => env('MAINTENANCE_TOKEN'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Autoloaded Service Providers
     |--------------------------------------------------------------------------
     |
@@ -204,9 +216,6 @@ return [
         App\Providers\TenancyServiceProvider::class,
         App\Providers\Filament\TenantPanelProvider::class,
         App\Providers\Filament\AdminPanelProvider::class,
-        App\Providers\NativeAppServiceProvider::class,
-        Native\Laravel\NativeServiceProvider::class,
-        Native\Electron\ElectronServiceProvider::class,
     ],
 
     /*

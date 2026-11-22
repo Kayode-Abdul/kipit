@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActivationKeyResource\Pages;
 use App\Models\ActivationKey;
+use App\Tenant;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,9 +14,18 @@ use Illuminate\Support\Str;
 
 class ActivationKeyResource extends Resource
 {
+    public static function canViewAny(): bool
+    {
+        /** @var \App\Models\Admin|null $admin */
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+
+        return $admin?->isAdmin() ?? false;
+    }
+
     protected static ?string $model = ActivationKey::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-key';
+
     protected static ?string $navigationLabel = 'Activation Keys';
 
     public static function form(Form $form): Form
@@ -28,14 +38,27 @@ class ActivationKeyResource extends Resource
                     ->default(fn () => Str::random(16))
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
-                Forms\Components\Toggle::make('is_used')
-                    ->label('Is Used')
-                    ->disabled()
-                    ->default(false),
                 Forms\Components\Select::make('tenant_id')
-                    ->label('Used by Shop (Tenant)')
-                    ->relationship('tenant', 'id')
-                    ->disabled(),
+                    ->label('Shop (Tenant)')
+                    ->helperText('Assign this key to a shop now, or leave empty until the shop redeems it. You can change the shop later.')
+                    ->relationship(
+                        name: 'tenant',
+                        titleAttribute: 'id',
+                        modifyQueryUsing: fn ($query) => $query->orderBy('id'),
+                    )
+                    ->getOptionLabelFromRecordUsing(function (Tenant $record): string {
+                        $email = $record->tenancy_email ?: 'no email';
+                        $name = $record->full_name ?: $record->id;
+
+                        return "{$record->id} — {$name} ({$email})";
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
+                Forms\Components\Toggle::make('is_used')
+                    ->label('Marked as used')
+                    ->helperText('Turn on when this key has activated a shop. Admins can correct this if needed.')
+                    ->default(false),
                 Forms\Components\DateTimePicker::make('expires_at')
                     ->label('Expires At (Optional)'),
             ]);
@@ -51,8 +74,13 @@ class ActivationKeyResource extends Resource
                     ->copyMessage('Key copied to clipboard!'),
                 Tables\Columns\IconColumn::make('is_used')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('tenant_id')
-                    ->label('Used By')
+                Tables\Columns\TextColumn::make('tenant.id')
+                    ->label('Shop')
+                    ->placeholder('—')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('tenant.tenancy_email')
+                    ->label('Owner email')
+                    ->placeholder('—')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('expires_at')
                     ->dateTime()

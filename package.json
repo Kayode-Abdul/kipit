@@ -1,6 +1,6 @@
 {
     "name": "kipit",
-    "version": "1.0.0",
+    "version": "1.9.3",
     "description": "Kipit Desktop Client",
     "author": "Kipit",
     "type": "module",
@@ -17,7 +17,7 @@
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.7",
-        "@tailwindcss/typography": "^0.5.13",
+        "@tailwindcss/typography": "^0.5.20",
         "alpinejs": "^3.4.2",
         "autoprefixer": "^10.4.19",
         "concurrently": "^10.0.5",
@@ -31,11 +31,11 @@
     },
     "build": {
         "directories": {
-            "output": "public/downloads/desktop"
+            "output": "dist"
         },
         "generateUpdatesFilesForAllChannels": false,
         "appId": "com.kipit.pos",
-        "artifactName": "kipit-${version}-${os}.${ext}",
+        "artifactName": "kipit-${version}-${os}-${arch}.${ext}",
         "asar": false,
         "productName": "Kipit",
         "icon": "build/icon.png",
@@ -47,30 +47,62 @@
             "bootstrap/**/*",
             "config/**/*",
             "database/**/*",
+            "!database/**/*.lock",
             "public/**/*",
             "!public/downloads/**/*",
             "!public/hot",
+            "!public/**/*.lock",
             "resources/**/*",
             "routes/**/*",
             "storage/**/*",
             "vendor/**/*",
+            "!vendor/nativephp/electron/resources/js/node_modules/**/*",
+            "!vendor/nativephp/php-bin/**/*",
+            "!vendor/nativephp/electron/resources/js/resources/app/public/downloads/**/*",
+            "!**/public/downloads/**/*",
+            "!node_modules/**/*",
+            "!.git/**/*",
+            "!tests/**/*",
+            "!**/*.sqlite.lock",
             ".env",
             "composer.json",
-            "composer.lock"
+            "composer.lock",
+            "version.txt"
         ],
         "mac": {
             "category": "public.app-category.business",
-            "icon": "build/icon.icns",
             "target": [
-                "zip"
-            ]
+                "dmg"
+            ],
+            "artifactName": "kipit-${version}-mac.${ext}"
         },
         "win": {
-            "icon": "build/icon.ico",
             "target": [
-                "nsis",
-                "zip"
-            ]
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "artifactName": "kipit-${version}-setup.${ext}"
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "allowElevation": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "Kipit",
+            "uninstallDisplayName": "Kipit",
+            "installerLanguages": [
+                "en_US"
+            ],
+            "displayLanguageSelector": false,
+            "deleteAppDataOnUninstall": false,
+            "runAfterFinish": true,
+            "differentialPackage": false
         }
     }
 }

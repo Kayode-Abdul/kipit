@@ -1,7 +1,7 @@
   <div class="setup-screen">
     <div class="setup-card">
       <div style="text-align: center; margin-bottom: 24px;">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/logo/image-1.png'))) }}" alt="Kipit POS" style="height: 48px; object-fit: contain;">
+        <img src="{{ asset('assets/logo/image-1.png') }}" alt="Kipit POS" style="height: 48px; object-fit: contain;">
       </div>
 
       {{-- Step indicators --}}

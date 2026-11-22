@@ -6,17 +6,18 @@
     <div class="max-w-4xl mx-auto">
       <div class="flex items-center justify-between p-4">
         <button @click="goToMenu"
-          class="text-gray-800">
+          class="text-gray-800"
+          aria-label="Back">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 class="text-xl font-semibold">Cart</h1>
-        <button class="text-gray-800">
+        <h1 class="text-xl font-semibold">{{ __('Cart') }}</h1>
+        <a href="/member" class="text-gray-800" aria-label="{{ __('Dashboard') }}">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-        </button>
+        </a>
       </div>
     </div>
   </div>
@@ -26,7 +27,7 @@
     <div class="space-y-4">
       <template x-for="(cartItem, itemId) in cart" :key="itemId">
         <div class="flex items-center space-x-4 bg-white rounded-lg p-4">
-          <img :src="cartItem.product.hero_images[0]" class="w-24 h-24 object-cover rounded-lg">
+          <img :src="cartItem.product.hero_image" class="w-24 h-24 object-cover rounded-lg">
           <div class="flex-1">
             <h3 class="font-medium" x-text="cartItem.product.name"></h3>
             <p class="text-sm text-gray-500" x-text="cartItem.product.description"></p>

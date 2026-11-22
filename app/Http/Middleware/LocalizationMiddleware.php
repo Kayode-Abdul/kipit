@@ -20,12 +20,19 @@ class LocalizationMiddleware
             return $next($request);
         }
         $locale = 'en';
+        $timezone = 'UTC';
+        
         $user = auth()->user();
         if ($user) {
             $locale = $user->profile->locale ?? 'en';
+            $timezone = $user->profile->timezone ?? 'UTC';
         }
+        
         config(['app.locale' => $locale]);
         app()->setLocale($locale);
+
+        config(['app.timezone' => $timezone]);
+        date_default_timezone_set($timezone);
 
         return $next($request);
     }

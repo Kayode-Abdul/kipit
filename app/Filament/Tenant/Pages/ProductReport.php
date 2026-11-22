@@ -2,6 +2,7 @@
 
 namespace App\Filament\Tenant\Pages;
 
+use App\Filament\Tenant\Pages\Traits\HasPageNavigation;
 use App\Filament\Tenant\Pages\Traits\HasReportPageSidebar;
 use App\Services\Tenants\ProductReportService;
 use App\Traits\HasTranslatableResource;
@@ -17,7 +18,7 @@ use Livewire\Attributes\Url;
 
 class ProductReport extends Page implements HasActions, HasForms
 {
-    use HasReportPageSidebar, HasTranslatableResource, InteractsWithFormActions, InteractsWithForms;
+    use HasPageNavigation, HasReportPageSidebar, HasTranslatableResource, InteractsWithFormActions, InteractsWithForms;
 
     protected static ?string $title = '';
 

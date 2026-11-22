@@ -102,17 +102,25 @@ class StocksRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->label(__('Add Item'))
                     ->action(function (array $data) {
-                        /** @var Purchasing $purchasing */
-                        $purchasing = $this->ownerRecord;
-                        $stock = $this->stockService->create($data, $purchasing);
-                        $this->purchasingService->update(
-                            $purchasing->getKey(),
-                            $this->purchasingService->getUpdatedPrice($purchasing)
-                        );
-                        if ($stock->is_ready) {
-                            RecalculateEvent::dispatch(collect([$stock->product]), []);
+                        try {
+                            /** @var Purchasing $purchasing */
+                            $purchasing = $this->ownerRecord;
+                            $stock = $this->stockService->create($data, $purchasing);
+                            $this->purchasingService->update(
+                                $purchasing->getKey(),
+                                $this->purchasingService->getUpdatedPrice($purchasing)
+                            );
+                            if ($stock->is_ready) {
+                                RecalculateEvent::dispatch(collect([$stock->product]), []);
+                            }
+                            $this->refreshPage();
+                        } catch (\Throwable $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Error during creation')
+                                ->body($e->getMessage() . ' line ' . $e->getLine())
+                                ->danger()
+                                ->send();
                         }
-                        $this->refreshPage();
                     }),
             ])
             ->actions([

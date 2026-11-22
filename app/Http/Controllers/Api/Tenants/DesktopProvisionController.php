@@ -16,7 +16,6 @@ class DesktopProvisionController extends Controller
 {
     /**
      * Tables to include in the desktop provisioning payload.
-     * This is the tenant's full dataset that will seed the local SQLite database.
      */
     protected array $provisionTables = [
         'users',
@@ -36,6 +35,9 @@ class DesktopProvisionController extends Controller
         'cash_drawers',
         'cart_items',
         'abouts',
+        'settings',
+        'features',
+        'profiles',
         'payment_methods',
         'roles',
         'permissions',
@@ -45,10 +47,6 @@ class DesktopProvisionController extends Controller
         'role_has_permissions',
     ];
 
-    /**
-     * Authenticate a desktop app user against the live server.
-     * Returns a Sanctum token + tenant/user metadata for the desktop app.
-     */
     public function authenticate(Request $request): JsonResponse
     {
         $request->validate([
@@ -57,16 +55,15 @@ class DesktopProvisionController extends Controller
             'device_name' => ['required', 'string'],
         ]);
 
-        // Check if the tenant is active before allowing provisioning
         $tenant = tenant();
-        if ($tenant && !$tenant->isActive()) {
+        if ($tenant && ! $tenant->isActive()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your shop is not active. Please activate your shop on the web before connecting a desktop app.',
             ], Response::HTTP_FORBIDDEN);
         }
 
-        if (!Auth::guard('web')->attempt($request->only('email', 'password'))) {
+        if (! Auth::guard('web')->attempt($request->only('email', 'password'))) {
             return response()->json([
                 'success' => false,
                 'message' => 'The provided credentials are incorrect.',
@@ -75,9 +72,18 @@ class DesktopProvisionController extends Controller
 
         /** @var User $user */
         $user = Auth::guard('web')->user();
-        $token = $user->createToken($request->device_name);
 
-        // Gather tenant metadata
+        if (! $this->userMayConnectDesktop($user)) {
+            Auth::guard('web')->logout();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'This user role is not allowed to connect a desktop device. Ask an admin to enable “access desktop” for the role.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $token = $user->createToken($request->device_name, ['desktop-sync']);
+
         $tenantMeta = [];
         if ($tenant) {
             $tenantMeta = [
@@ -85,7 +91,6 @@ class DesktopProvisionController extends Controller
                 'created_at' => $tenant->created_at?->toISOString(),
             ];
 
-            // Include about/shop info if available
             try {
                 if (Schema::hasTable('abouts')) {
                     $about = DB::table('abouts')->first();
@@ -111,7 +116,7 @@ class DesktopProvisionController extends Controller
                     'email' => $user->email,
                     'role' => $user->roles()->first()?->name,
                     'permissions' => $user->roles()->first()?->permissions()
-                        ->where('guard_name', 'sanctum')
+                        ->where('guard_name', 'desktop')
                         ->pluck('name')
                         ->toArray() ?? [],
                 ],
@@ -120,39 +125,32 @@ class DesktopProvisionController extends Controller
     }
 
     /**
-     * Provision the desktop app with the full tenant dataset.
-     * This is called after successful authentication and returns all tenant data.
+     * Provision desktop data in bounded chunks.
+     *
+     * Query params:
+     * - table: optional single table name
+     * - after_id: resume cursor (default 0)
+     * - limit: page size (default config sync.batch_size)
+     * - paginated=1: chunked mode (preferred for large tenants)
+     *
+     * Without paginated=1 and without table, returns a lightweight manifest
+     * so clients can walk tables page-by-page (avoids full-table memory dumps).
      */
     public function provision(Request $request): JsonResponse
     {
         $tenant = tenant();
-        if ($tenant && !$tenant->isActive()) {
+        if ($tenant && ! $tenant->isActive()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Your shop is not active.',
             ], Response::HTTP_FORBIDDEN);
         }
 
-        $tenantData = [];
-        $tableCounts = [];
+        $limit = max(50, min((int) $request->input('limit', config('sync.batch_size', 500)), 2000));
+        $afterId = max(0, (int) $request->input('after_id', 0));
+        $requestedTable = $request->input('table');
+        $paginated = $request->boolean('paginated', true);
 
-        foreach ($this->provisionTables as $tableName) {
-            try {
-                if (!Schema::hasTable($tableName)) {
-                    continue;
-                }
-
-                $records = DB::table($tableName)->get();
-                if ($records->isNotEmpty()) {
-                    $tenantData[$tableName] = $records->toArray();
-                    $tableCounts[$tableName] = $records->count();
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Desktop provision: failed to read table {$tableName}: {$e->getMessage()}");
-            }
-        }
-
-        // Include feature flags
         $features = [];
         try {
             $features = \Laravel\Pennant\Feature::all();
@@ -160,7 +158,6 @@ class DesktopProvisionController extends Controller
             // Pennant not available
         }
 
-        // Include tenant settings
         $settings = [];
         try {
             if (Schema::hasTable('settings')) {
@@ -170,10 +167,97 @@ class DesktopProvisionController extends Controller
             // Settings table may not exist
         }
 
+        $availableTables = array_values(array_filter(
+            $this->provisionTables,
+            fn (string $table) => Schema::hasTable($table)
+        ));
+
+        // Manifest: list tables + counts without loading rows
+        if ($paginated && ! $requestedTable) {
+            $summary = [];
+            foreach ($availableTables as $tableName) {
+                try {
+                    $summary[$tableName] = DB::table($tableName)->count();
+                } catch (\Throwable $e) {
+                    Log::warning("Desktop provision: failed to count {$tableName}: {$e->getMessage()}");
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Provisioning manifest ready.',
+                'data' => [
+                    'mode' => 'manifest',
+                    'tables' => $availableTables,
+                    'summary' => $summary,
+                    'features' => $features,
+                    'settings' => $settings,
+                    'batch_size' => $limit,
+                    'server_time' => now()->toISOString(),
+                ],
+            ]);
+        }
+
+        if ($requestedTable) {
+            if (! in_array($requestedTable, $this->provisionTables, true) || ! Schema::hasTable($requestedTable)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Unknown or unavailable table: {$requestedTable}",
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            [$records, $nextAfterId, $hasMore] = $this->fetchTableChunk($requestedTable, $afterId, $limit);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Provisioning chunk ready.',
+                'data' => [
+                    'mode' => 'chunk',
+                    'table' => $requestedTable,
+                    'records' => $records,
+                    'after_id' => $afterId,
+                    'next_after_id' => $nextAfterId,
+                    'has_more' => $hasMore,
+                    'count' => count($records),
+                    'features' => $features,
+                    'settings' => $settings,
+                    'server_time' => now()->toISOString(),
+                ],
+            ]);
+        }
+
+        // Legacy non-paginated fallback (bounded — still chunked in memory per table)
+        $tenantData = [];
+        $tableCounts = [];
+
+        foreach ($availableTables as $tableName) {
+            try {
+                $all = [];
+                $cursor = 0;
+                do {
+                    [$chunk, $cursor, $hasMore] = $this->fetchTableChunk($tableName, $cursor, $limit);
+                    if (empty($chunk)) {
+                        break;
+                    }
+                    foreach ($chunk as $row) {
+                        $all[] = $row;
+                    }
+                } while ($hasMore);
+
+                if (! empty($all)) {
+                    $tenantData[$tableName] = $all;
+                    $tableCounts[$tableName] = count($all);
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Desktop provision: failed to read table {$tableName}: {$e->getMessage()}");
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Provisioning data ready.',
             'data' => [
+                'mode' => 'full',
                 'tables' => $tenantData,
                 'features' => $features,
                 'settings' => $settings,
@@ -181,5 +265,71 @@ class DesktopProvisionController extends Controller
                 'server_time' => now()->toISOString(),
             ],
         ]);
+    }
+
+    /**
+     * Desktop connect uses the desktop permission set (not web/mobile).
+     * Owners always; otherwise requires desktop “access desktop”,
+     * with a temporary fallback until shops migrate.
+     */
+    protected function userMayConnectDesktop(User $user): bool
+    {
+        if ($user->is_owner) {
+            return true;
+        }
+
+        $role = $user->roles()->first();
+        if (! $role) {
+            return false;
+        }
+
+        $desktopPermissionNames = $role->permissions()
+            ->where('guard_name', 'desktop')
+            ->pluck('name')
+            ->all();
+
+        if (in_array('access desktop', $desktopPermissionNames, true)) {
+            return true;
+        }
+
+        // Backward-compatible fallback until tenant migrations seed desktop perms.
+        $webPermissionNames = $role->permissions()
+            ->where('guard_name', 'web')
+            ->pluck('name')
+            ->all();
+
+        return in_array('create selling', $webPermissionNames, true)
+            || in_array('access general setting', $webPermissionNames, true);
+    }
+
+    /**
+     * Fetch a bounded page of rows. Prefer id cursors; fall back to offset for
+     * pivot tables without an id column (e.g. Spatie permission pivots).
+     *
+     * @return array{0: array<int, object>, 1: int, 2: bool}
+     */
+    protected function fetchTableChunk(string $tableName, int $afterId, int $limit): array
+    {
+        if (Schema::hasColumn($tableName, 'id')) {
+            $collection = DB::table($tableName)
+                ->where('id', '>', $afterId)
+                ->orderBy('id')
+                ->limit($limit)
+                ->get();
+
+            $nextAfterId = $collection->isNotEmpty() ? (int) $collection->last()->id : $afterId;
+            $hasMore = $collection->count() === $limit
+                && DB::table($tableName)->where('id', '>', $nextAfterId)->exists();
+
+            return [$collection->all(), $nextAfterId, $hasMore];
+        }
+
+        // Offset-based paging for composite-key pivots (usually small).
+        $offset = max(0, $afterId);
+        $collection = DB::table($tableName)->offset($offset)->limit($limit)->get();
+        $nextAfterId = $offset + $collection->count();
+        $hasMore = $collection->count() === $limit;
+
+        return [$collection->all(), $nextAfterId, $hasMore];
     }
 }
