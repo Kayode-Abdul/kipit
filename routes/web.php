@@ -165,6 +165,72 @@ Volt::route('/blog/{slug}', 'pages/blog/show')->name('blog.show');
 Route::view('/status', 'pages.support.status')->name('status');
 Route::view('/offline', 'offline');
 
+Route::get('/robots.txt', function () {
+    $body = implode("\n", [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /admin',
+        'Disallow: /member',
+        'Disallow: /livewire',
+        'Disallow: /__migrate',
+        'Disallow: /__backup',
+        'Disallow: /__queue',
+        'Disallow: /clear-cache',
+        '',
+        'Sitemap: '.url('/sitemap.xml'),
+        '',
+    ]);
+
+    return response($body, 200, [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->name('robots');
+
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        url('/'),
+        route('download'),
+        route('pricing'),
+        route('blog.index'),
+        route('getting-started'),
+        route('help'),
+        route('api-docs'),
+        route('contact'),
+        route('status'),
+        route('privacy'),
+        route('terms'),
+        route('cookies'),
+        route('security'),
+        route('auth.register'),
+    ];
+
+    try {
+        $posts = \App\Models\BlogPost::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(200)
+            ->get(['slug', 'updated_at', 'published_at']);
+        foreach ($posts as $post) {
+            $urls[] = route('blog.show', $post->slug);
+        }
+    } catch (\Throwable $e) {
+        // Blog table may be missing on fresh installs.
+    }
+
+    $body = '<?xml version="1.0" encoding="UTF-8"?>'
+        .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+    foreach (array_unique($urls) as $loc) {
+        $body .= '<url><loc>'.e($loc).'</loc></url>';
+    }
+    $body .= '</urlset>';
+
+    return response($body, 200, [
+        'Content-Type' => 'application/xml; charset=UTF-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+})->name('sitemap');
+
 Route::get('/serviceworker.js', function () {
     return response()->file(public_path('serviceworker.js'))
         ->header('Content-Type', 'application/javascript');

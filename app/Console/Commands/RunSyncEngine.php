@@ -158,7 +158,22 @@ class RunSyncEngine extends Command
                 $pushedAny = true;
                 $afterId = (int) $unsyncedRecords->last()->id;
 
-                $mappedRecords = $unsyncedRecords->map(function ($item) use ($tableName, $apiToken, $uploadDisk) {
+                // Batch-load FK → sync_id maps once per page (avoids N+1 on large pushes).
+                $fkLookups = [];
+                foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
+                    $ids = $unsyncedRecords->pluck($foreignKey)->filter()->unique()->values();
+                    if ($ids->isEmpty() || ! Schema::hasTable($refTable)) {
+                        $fkLookups[$foreignKey] = [];
+
+                        continue;
+                    }
+                    $fkLookups[$foreignKey] = DB::table($refTable)
+                        ->whereIn('id', $ids->all())
+                        ->pluck('sync_id', 'id')
+                        ->all();
+                }
+
+                $mappedRecords = $unsyncedRecords->map(function ($item) use ($tableName, $apiToken, $uploadDisk, $fkLookups) {
                     $record = (array) $item;
 
                     if ($tableName === 'products' && ! empty($record['hero_images'])) {
@@ -167,9 +182,8 @@ class RunSyncEngine extends Command
 
                     foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
                         if (array_key_exists($foreignKey, $record) && $record[$foreignKey] !== null) {
-                            $refRecord = DB::table($refTable)->where('id', $record[$foreignKey])->first();
                             $syncKey = str_replace('_id', '_sync_id', $foreignKey);
-                            $record[$syncKey] = $refRecord ? $refRecord->sync_id : null;
+                            $record[$syncKey] = $fkLookups[$foreignKey][$record[$foreignKey]] ?? null;
                         }
                     }
 
@@ -323,9 +337,40 @@ class RunSyncEngine extends Command
         DB::beginTransaction();
         try {
             foreach ($pullData as $tableName => $records) {
+                $normalized = [];
                 foreach ($records as $recordData) {
-                    $recordData = (array) $recordData;
+                    $normalized[] = (array) $recordData;
+                }
 
+                // Batch-load sync_id → local id maps once per pulled table page.
+                $fkLookups = [];
+                foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
+                    $syncKey = str_replace('_id', '_sync_id', $foreignKey);
+                    $syncIds = collect($normalized)->pluck($syncKey)->filter()->unique()->values();
+                    if ($syncIds->isEmpty() || ! Schema::hasTable($refTable)) {
+                        $fkLookups[$syncKey] = [];
+
+                        continue;
+                    }
+                    $fkLookups[$syncKey] = DB::table($refTable)
+                        ->whereIn('sync_id', $syncIds->all())
+                        ->pluck('id', 'sync_id')
+                        ->all();
+                }
+
+                $existingBySyncId = [];
+                if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'sync_id')) {
+                    $pageSyncIds = collect($normalized)->pluck('sync_id')->filter()->unique()->values();
+                    if ($pageSyncIds->isNotEmpty()) {
+                        $existingBySyncId = DB::table($tableName)
+                            ->whereIn('sync_id', $pageSyncIds->all())
+                            ->get()
+                            ->keyBy('sync_id')
+                            ->all();
+                    }
+                }
+
+                foreach ($normalized as $recordData) {
                     if ($tableName === 'settings' && ! empty($recordData['key'])) {
                         \App\Models\Tenants\Setting::set($recordData['key'], $recordData['value'] ?? null);
 
@@ -362,8 +407,9 @@ class RunSyncEngine extends Command
 
                     if ($tableName === 'profiles' && ! empty($recordData['user_id'])) {
                         if (! empty($recordData['user_sync_id'])) {
-                            $refUser = DB::table('users')->where('sync_id', $recordData['user_sync_id'])->first();
-                            $recordData['user_id'] = $refUser ? $refUser->id : $recordData['user_id'];
+                            $recordData['user_id'] = $fkLookups['user_sync_id'][$recordData['user_sync_id']]
+                                ?? (DB::table('users')->where('sync_id', $recordData['user_sync_id'])->value('id')
+                                    ?: $recordData['user_id']);
                             unset($recordData['user_sync_id']);
                         }
 
@@ -384,8 +430,7 @@ class RunSyncEngine extends Command
                         $syncKey = str_replace('_id', '_sync_id', $foreignKey);
                         if (array_key_exists($syncKey, $recordData)) {
                             if ($recordData[$syncKey] !== null) {
-                                $refRecord = DB::table($refTable)->where('sync_id', $recordData[$syncKey])->first();
-                                $recordData[$foreignKey] = $refRecord ? $refRecord->id : null;
+                                $recordData[$foreignKey] = $fkLookups[$syncKey][$recordData[$syncKey]] ?? null;
                             } else {
                                 $recordData[$foreignKey] = null;
                             }
@@ -393,7 +438,7 @@ class RunSyncEngine extends Command
                         }
                     }
 
-                    $existingRecord = DB::table($tableName)->where('sync_id', $recordData['sync_id'])->first();
+                    $existingRecord = $existingBySyncId[$recordData['sync_id']] ?? null;
 
                     unset($recordData['id']);
                     if (Schema::hasColumn($tableName, 'is_synced')) {

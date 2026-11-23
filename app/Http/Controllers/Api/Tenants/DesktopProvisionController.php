@@ -226,45 +226,18 @@ class DesktopProvisionController extends Controller
             ]);
         }
 
-        // Legacy non-paginated fallback (bounded — still chunked in memory per table)
-        $tenantData = [];
-        $tableCounts = [];
-
-        foreach ($availableTables as $tableName) {
-            try {
-                $all = [];
-                $cursor = 0;
-                do {
-                    [$chunk, $cursor, $hasMore] = $this->fetchTableChunk($tableName, $cursor, $limit);
-                    if (empty($chunk)) {
-                        break;
-                    }
-                    foreach ($chunk as $row) {
-                        $all[] = $row;
-                    }
-                } while ($hasMore);
-
-                if (! empty($all)) {
-                    $tenantData[$tableName] = $all;
-                    $tableCounts[$tableName] = count($all);
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Desktop provision: failed to read table {$tableName}: {$e->getMessage()}");
-            }
-        }
-
+        // Full-dump mode removed: large tenants OOMed the API. Clients must use
+        // paginated=1 (manifest) then table + after_id chunks.
         return response()->json([
-            'success' => true,
-            'message' => 'Provisioning data ready.',
+            'success' => false,
+            'message' => 'Full desktop provision is disabled. Request with paginated=1 (manifest) or table + after_id.',
             'data' => [
-                'mode' => 'full',
-                'tables' => $tenantData,
-                'features' => $features,
-                'settings' => $settings,
-                'summary' => $tableCounts,
+                'mode' => 'manifest_required',
+                'tables' => $availableTables,
+                'batch_size' => $limit,
                 'server_time' => now()->toISOString(),
             ],
-        ]);
+        ], Response::HTTP_GONE);
     }
 
     /**

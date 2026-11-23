@@ -111,50 +111,62 @@ $subscribe = function () {
 ?>
 
 <div>
-  <section class="w-full bg-white lg:h-screen md:h-[80vh]" data-tails-scripts="//unpkg.com/alpinejs">
+  <section class="w-full bg-white lg:h-screen md:h-[80vh]" x-data="{ open: false }">
     <header class="relative block w-full py-6 leading-10 text-center">
       <div class="w-full px-6 mx-auto leading-10 text-center lg:px-8 max-w-7xl">
-        <div class="box-border flex flex-wrap items-center justify-between -mx-4 text-indigo-900">
+        <div class="box-border flex flex-wrap items-center justify-between -mx-4 text-gray-900">
           <div class="relative z-10 flex items-center w-auto px-4 leading-10 lg:flex-grow-0 lg:flex-shrink-0 lg:text-left">
-            <a href="/" class="flex box-border font-sans text-2xl font-bold text-left text-gray-900 no-underline bg-transparent cursor-pointer focus:no-underline items-end gap-x-2">
-              <img src="{{ env('APP_URL') }}/assets/logo/image.png" class="h-10"> <p>Kipit</p>
+            <a href="/" class="flex box-border font-sans text-2xl font-bold text-left text-gray-900 no-underline bg-transparent cursor-pointer items-end gap-x-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-kipit-primary rounded">
+              <img src="{{ asset('assets/logo/image.png') }}" class="h-10 w-auto" width="40" height="40" alt="Kipit POS">
+              <span>Kipit</span>
             </a>
           </div>
 
-          <div class="relative items-center hidden px-4 mt-2 space-x-5 font-medium leading-10 md:flex md:flex-grow-0 md:flex-shrink-0 md:mt-0 md:text-right lg:flex-grow-0 lg:flex-shrink-0">
-            <a href="/download" class="font-medium text-gray-500 hover:text-gray-900">Download</a>
-            <a href="/blog" class="font-medium text-gray-500 hover:text-gray-900">Blog</a>
-            <a href="/pricing" class="font-medium text-kipit-primary hover:text-gray-900">Pricing</a>
+          <nav class="relative items-center hidden px-4 mt-2 space-x-5 font-medium leading-10 md:flex md:flex-grow-0 md:flex-shrink-0 md:mt-0 md:text-right" aria-label="Primary">
+            <a href="/download" class="font-medium text-gray-700 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-kipit-primary rounded">Download</a>
+            <a href="/blog" class="font-medium text-gray-700 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-kipit-primary rounded">Blog</a>
+            <a href="/pricing" class="font-medium text-kipit-primary hover:text-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-kipit-primary rounded">Pricing</a>
             <a href="/member/login"
-              class="bg-gray-100 text-gray-400 md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-gray-100 focus:text-gray-700 hover:text-gray-700"
+              class="bg-gray-100 text-gray-800 md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus-visible:ring-offset-2 focus-visible:ring-2 focus-visible:ring-gray-400 hover:text-gray-900"
             >Login</a>
-            <a href="{{ route('auth.register') }}" class="bg-kipit-primary text-white md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus:ring-offset-2 focus:ring-2 focus:ring-kipit-primary">Register POS</a>
-          </div>
+            <a href="{{ route('auth.register') }}" class="bg-kipit-primary text-white md:w-auto w-full px-8 py-3 rounded-full flex items-center justify-center font-medium text-lg focus-visible:ring-offset-2 focus-visible:ring-2 focus-visible:ring-kipit-primary">Register POS</a>
+          </nav>
 
-          <!-- Sidebar -->
-          <div class="md:hidden">
-            <div>
-              <div>
-                <button class="text-white hidden left-10 fixed top-20 text-2xl px-3 py-1 bg-kipit-primary rounded-lg"
-                  x-ref="xButton"
-                  x-on:click="$refs.menu.classList.toggle('hidden'); $refs.xButton.classList.toggle('hidden');"
-                  >X</button>
+          <div class="md:hidden px-4">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center p-2 rounded-md text-gray-800 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-kipit-primary"
+              @click="open = !open"
+              :aria-expanded="open.toString()"
+              aria-controls="home-mobile-nav"
+              aria-label="Toggle navigation menu"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+              </svg>
+            </button>
+            <div
+              id="home-mobile-nav"
+              x-show="open"
+              x-cloak
+              @keydown.escape.window="open = false"
+              class="fixed inset-y-0 right-0 w-64 bg-gray-900 text-white flex flex-col z-40"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mobile navigation"
+            >
+              <div class="flex justify-end p-4">
+                <button type="button" class="px-3 py-1 rounded bg-kipit-primary" @click="open = false" aria-label="Close menu">Close</button>
               </div>
-              <div class="fixed inset-y-0 right-0 w-64 bg-gray-800 text-white flex-col justify-between z-20 hidden" x-ref="menu">
-                <!-- Links -->
-                <div class="flex flex-col mt-8">
-                  <a href="/download" class="px-6 py-3 text-sm font-medium">Download</a>
-                  <a href="/blog" class="px-6 py-3 text-sm font-medium">Blog</a>
-                  <a href="/pricing" class="px-6 py-3 text-sm font-medium">Pricing</a>
-                  <a href="/member/login" class="px-6 py-3 text-sm font-medium">Login</a>
-                  <a href="{{ route('auth.register') }}" class="px-6 py-3 text-sm font-medium">Register POS</a>
-                </div>
-              </div>
+              <nav class="flex flex-col" aria-label="Mobile">
+                <a href="/download" class="px-6 py-3 text-sm font-medium">Download</a>
+                <a href="/blog" class="px-6 py-3 text-sm font-medium">Blog</a>
+                <a href="/pricing" class="px-6 py-3 text-sm font-medium">Pricing</a>
+                <a href="/member/login" class="px-6 py-3 text-sm font-medium">Login</a>
+                <a href="{{ route('auth.register') }}" class="px-6 py-3 text-sm font-medium">Register POS</a>
+              </nav>
             </div>
-            <!-- Content -->
-            <div class="flex items-center justify-center h-full mr-5 text-gray-800" x-on:click="$refs.menu.classList.toggle('hidden'); $refs.xButton.classList.toggle('hidden');">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
-            </div>
+            <div x-show="open" x-cloak class="fixed inset-0 bg-black/40 z-30 md:hidden" @click="open = false" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -172,7 +184,7 @@ $subscribe = function () {
     --}}
 
 
-    <main class="w-full relative">
+    <main id="home-hero" class="w-full relative" tabindex="-1">
       <div class="max-w-7xl px-10 mx-auto flex lg:flex-row flex-col py-20">
         <div class="w-full lg:w-1/2 flex lg:justify-start justify-start md:justify-center hero-title">
           <div class="lg:py-24  lg:text-left text-left md:text-center">
@@ -180,8 +192,8 @@ $subscribe = function () {
             <h1 class="mt-4 text-4xl tracking-tight font-extrabold text-gray-800 sm:mt-5 lg:text-left text-left md:text-center sm:text-6xl lg:mt-6 xl:text-7xl">
               <span class="flex items-center justify-start lg:justify-start md:justify-center w-full">kipit <span class="text-kipit-primary ml-3">POS</span></span>
             </h1>
-            <p class="mt-3 text-base text-gray-400 sm:mt-5 sm:text-xl lg:text-lg  lg:text-left text-left md:text-center xl:text-xl">
-              Kipit is a powerful, multi-tenant Point of Sale (POS) system designed to streamline your business. 
+            <p class="mt-3 text-base text-gray-600 sm:mt-5 sm:text-xl lg:text-lg  lg:text-left text-left md:text-center xl:text-xl">
+              Kipit is a powerful, multi-tenant Point of Sale (POS) system designed to streamline your business.
               <br class="xl:block hidden"> Manage inventory, process sales securely, track daily profits, and sync effortlessly across all your devices.
             </p>
             <div class="mt-6 sm:mt-8">
@@ -220,7 +232,7 @@ $subscribe = function () {
           </div>
           <div class="w-full flex items-end max-w-md h-auto relative">
 
-            <img src="/assets/images/product-management.png" class="relative h-[40rem] lg:left-20">
+            <img src="{{ asset('assets/images/product-management.png') }}" class="relative h-[40rem] lg:left-20" width="640" height="640" alt="Kipit POS product management screen" decoding="async" fetchpriority="high">
           </div>
         </div>
       </div>
@@ -228,38 +240,38 @@ $subscribe = function () {
   </section>
   <section id="about" class="bg-gray-800 text-white py-32">
     <div class="lg:max-w-3xl mx-auto text-center px-5 lg:px-0">
-      <p class="text-4xl font-extrabold">About kipit</p>
-       <p class="text-lg mt-5">Kipit is an all-in-one Point of Sale (POS) solution built for modern businesses. Available natively on Windows, macOS, and the web. it empowers you to manage product inventory, track detailed sales analytics, print receipts via USB ESC/POS, operate multiple stores seamlessly with role-based access control, and even work completely offline when you lose your internet connection. Start with a free 30-day trial to experience full features, then purchase an access key for permanent, unrestricted access. <br><br>Ready to get started? <a href="/download" class="text-kipit-primary underline hover:text-white transition-colors">Download kipit</a> for your device today.</p>
+      <h2 class="text-4xl font-extrabold">About kipit</h2>
+       <p class="text-lg mt-5 text-gray-100">Kipit is an all-in-one Point of Sale (POS) solution built for modern businesses. Available natively on Windows, macOS, and the web. it empowers you to manage product inventory, track detailed sales analytics, print receipts via USB ESC/POS, operate multiple stores seamlessly with role-based access control, and even work completely offline when you lose your internet connection. Start with a free 30-day trial to experience full features, then purchase an access key for permanent, unrestricted access. <br><br>Ready to get started? <a href="/download" class="text-orange-300 underline hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors">Download kipit</a> for your device today.</p>
     </div>
   </section>
   <section id="product-menu" class="py-10 my-10 text-gray-400">
     <div class="xl:max-w-7xl lg:max-w-4xl mx-auto">
-      <p class="text-4xl font-extrabold text-center text-gray-800">kipit Menu</p>
+      <h2 class="text-4xl font-extrabold text-center text-gray-800">kipit Menu</h2>
       <div class="lg:grid lg:grid-cols-3 grid-cols-2 my-10 gap-x-5">
         @foreach ($menu as $item)
           @if ($loop->iteration % 2 == 0)
             <div class="grid grid-cols-2 lg:grid-cols-none lg:block my-10 md:my-0">
               <div class="flex gap-x-5 justify-items-center lg:mb-10 sm:my-auto ml-10 lg:ml-0">
-                <div class="h-10 min-w-2 bg-kipit-primary rounded-lg"></div>
+                <div class="h-10 min-w-2 bg-kipit-primary rounded-lg" aria-hidden="true"></div>
                 <div class="lg:grid lg:grid-cols-1 xl:gap-y-3 lg:gap-y-1">
-                  <p class="text-2xl text-gray-800 font-bold">{{ $item['title'] }}</p>
-                  <p class="text-gray-400 w-4/5">{{ $item['description'] }}</p>
+                  <h3 class="text-2xl text-gray-800 font-bold">{{ $item['title'] }}</h3>
+                  <p class="text-gray-600 w-4/5">{{ $item['description'] }}</p>
                 </div>
               </div>
               <div class="flex justify-center">
-                <img src="{{ $item['image'] }}" class="w-44">
+                <img src="{{ asset(ltrim($item['image'], '/')) }}" class="w-44" width="176" height="176" alt="{{ $item['title'] }}" loading="lazy" decoding="async">
               </div>
             </div>
           @else
             <div class="grid grid-cols-2 lg:grid-cols-none lg:block">
               <div class="flex justify-center">
-                <img src="{{ $item['image'] }}" class="w-44">
+                <img src="{{ asset(ltrim($item['image'], '/')) }}" class="w-44" width="176" height="176" alt="{{ $item['title'] }}" loading="lazy" decoding="async">
               </div>
               <div class="flex gap-x-5 justify-items-center lg:mt-10 sm:my-auto">
-                <div class="h-10 min-w-2 bg-kipit-primary rounded-lg"></div>
+                <div class="h-10 min-w-2 bg-kipit-primary rounded-lg" aria-hidden="true"></div>
                 <div class="lg:grid lg:grid-cols-1 xl:gap-y-3 lg:gap-y-1">
-                  <p class="text-2xl text-gray-800 font-bold">{{ $item['title'] }}</p>
-                  <p class="text-gray-400 w-4/5">{{ $item['description'] }}</p>
+                  <h3 class="text-2xl text-gray-800 font-bold">{{ $item['title'] }}</h3>
+                  <p class="text-gray-600 w-4/5">{{ $item['description'] }}</p>
                 </div>
               </div>
             </div>
@@ -271,18 +283,18 @@ $subscribe = function () {
   <section id="main-feature" class="bg-gray-800 text-white py-32">
     <div class="md:max-w-4xl max-w-1xl mx-auto">
       <div class="mb-20 grid grid-cols-1 gap-y-5">
-        <p class="text-4xl font-extrabold text-center">kipit Features</p>
-        <p class="text-lg text-center sm:mx-0 mx-5">With kipit, you can easily manage your store. Here are the features kipit offers.</p>
+        <h2 class="text-4xl font-extrabold text-center">kipit Features</h2>
+        <p class="text-lg text-center sm:mx-0 mx-5 text-gray-200">With kipit, you can easily manage your store. Here are the features kipit offers.</p>
       </div>
       <div class="grid sm:grid-cols-2 lg:gap-20 gap-10 px-10">
         @foreach($mainFeatures as $feature)
         <div class="flex gap-x-4">
-          <div class="bg-kipit-primary rounded-2xl flex justify-center items-center min-w-10 h-10">
+          <div class="bg-kipit-primary rounded-2xl flex justify-center items-center min-w-10 h-10" aria-hidden="true">
             {!! $feature['icon'] !!}
           </div>
           <div>
-            <p class="text-2xl font-bold">{{ $feature['title'] }}</p>
-            <p class="text-gray-400 lg:w-4/5">{{ $feature['description'] }}</p>
+            <h3 class="text-2xl font-bold">{{ $feature['title'] }}</h3>
+            <p class="text-gray-300 lg:w-4/5">{{ $feature['description'] }}</p>
           </div>
         </div>
         @endforeach
@@ -292,15 +304,15 @@ $subscribe = function () {
 
   <section id="cta" class="xl:max-w-7xl lg:max-w-3xl md:px-10 mx-auto text-white">
     <div class="bg-kipit-primary text-center rounded-2xl my-20 p-10">
-      <p class="font-extrabold text-3xl">Get notified when we have updates</p>
+      <h2 class="font-extrabold text-3xl">Get notified when we have updates</h2>
       <p class="mt-5">Don't miss our latest updates, register your email now.</p>
       <form wire:submit="subscribe" class="mt-5 sm:mx-auto sm:flex sm:max-w-lg">
         <div class="min-w-0 flex-1">
           <label for="cta-email" class="sr-only">Email address</label>
-          <input id="cta-email" type="email" wire:model="subscriberEmail" required class="block w-full rounded-md border border-transparent px-5 py-3 text-base text-gray-900 placeholder-gray-500 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary" placeholder="Enter your email">
+          <input id="cta-email" type="email" wire:model="subscriberEmail" autocomplete="email" required class="block w-full rounded-md border border-transparent px-5 py-3 text-base text-gray-900 placeholder-gray-500 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary" placeholder="Enter your email">
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-3">
-          <button type="submit" class="block w-full rounded-md border border-transparent bg-orange-600 px-5 py-3 text-base font-medium text-white shadow hover:bg-kipit-primary focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary sm:px-10">
+          <button type="submit" class="block w-full rounded-md border border-transparent bg-gray-900 px-5 py-3 text-base font-medium text-white shadow hover:bg-black focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-kipit-primary sm:px-10">
             <span wire:loading.remove wire:target="subscribe">Notify me</span>
             <span wire:loading wire:target="subscribe">Saving...</span>
           </button>
@@ -316,7 +328,7 @@ $subscribe = function () {
         <!-- Brand & Description -->
         <div class="md:col-span-1">
           <a href="/" class="flex items-center gap-x-2 text-white font-bold text-2xl mb-4">
-            <img src="{{ env('APP_URL') }}/assets/logo/image.png" class="h-8" alt="Kipit POS Logo"> Kipit POS
+            <img src="{{ asset('assets/logo/image.png') }}" class="h-8 w-auto" width="32" height="32" alt="Kipit POS" loading="lazy" decoding="async"> Kipit POS
           </a>
           <p class="text-sm text-gray-400 mb-6">
             The ultimate multi-tenant POS solution designed to streamline your business, manage inventory, and track sales everywhere you go.

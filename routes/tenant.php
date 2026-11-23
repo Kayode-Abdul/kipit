@@ -125,13 +125,13 @@ Route::middleware([
                 Route::post('/checkout', [\App\Http\Controllers\Api\Tenants\SubscriptionController::class, 'checkout']);
             });
 
-            Route::group(['prefix' => 'sync'], function () {
+            Route::group(['prefix' => 'sync', 'middleware' => 'throttle:sync'], function () {
                 Route::post('/push', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'push']);
                 Route::get('/pull', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'pull']);
                 Route::post('/push/media', [\App\Http\Controllers\Api\Tenants\SyncController::class, 'pushMedia']);
             });
 
-            Route::group(['prefix' => 'desktop'], function () {
+            Route::group(['prefix' => 'desktop', 'middleware' => 'throttle:sync'], function () {
                 Route::get('/provision', [\App\Http\Controllers\Api\Tenants\DesktopProvisionController::class, 'provision']);
             });
 

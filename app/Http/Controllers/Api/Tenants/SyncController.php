@@ -49,20 +49,51 @@ class SyncController extends Controller
                     continue;
                 }
 
-                foreach ($records as $record) {
-                    if (empty($record['sync_id'])) {
+                $records = array_values(array_filter(
+                    $records,
+                    fn ($record) => ! empty($record['sync_id'] ?? null)
+                ));
+
+                if ($records === []) {
+                    continue;
+                }
+
+                // Batch-load sync_id → local id maps once per table payload (avoids N+1).
+                $fkLookups = [];
+                foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
+                    $syncKey = str_replace('_id', '_sync_id', $foreignKey);
+                    $syncIds = collect($records)->pluck($syncKey)->filter()->unique()->values();
+                    if ($syncIds->isEmpty() || ! Schema::hasTable($refTable)) {
+                        $fkLookups[$syncKey] = [];
+
                         continue;
                     }
+                    $fkLookups[$syncKey] = DB::table($refTable)
+                        ->whereIn('sync_id', $syncIds->all())
+                        ->pluck('id', 'sync_id')
+                        ->all();
+                }
 
+                $existingBySyncId = [];
+                if (Schema::hasColumn($tableName, 'sync_id')) {
+                    $existingBySyncId = DB::table($tableName)
+                        ->whereIn('sync_id', collect($records)->pluck('sync_id')->unique()->values()->all())
+                        ->get()
+                        ->keyBy('sync_id')
+                        ->all();
+                }
+
+                foreach ($records as $record) {
                     unset($record['id']);
-                    $record['is_synced'] = true;
+                    if (Schema::hasColumn($tableName, 'is_synced')) {
+                        $record['is_synced'] = true;
+                    }
 
                     foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
                         $syncKey = str_replace('_id', '_sync_id', $foreignKey);
                         if (array_key_exists($syncKey, $record)) {
                             if ($record[$syncKey] !== null) {
-                                $refRecord = DB::table($refTable)->where('sync_id', $record[$syncKey])->first();
-                                $record[$foreignKey] = $refRecord ? $refRecord->id : null;
+                                $record[$foreignKey] = $fkLookups[$syncKey][$record[$syncKey]] ?? null;
                             } else {
                                 $record[$foreignKey] = null;
                             }
@@ -70,7 +101,7 @@ class SyncController extends Controller
                         }
                     }
 
-                    $exists = DB::table($tableName)->where('sync_id', $record['sync_id'])->first();
+                    $exists = $existingBySyncId[$record['sync_id']] ?? null;
                     if ($exists) {
                         if (isset($record['updated_at'], $exists->updated_at)) {
                             if (strtotime($record['updated_at']) > strtotime($exists->updated_at)) {
@@ -141,13 +172,27 @@ class SyncController extends Controller
             $records = $query->limit($remaining)->get();
 
             if ($records->isNotEmpty()) {
-                $mappedRecords = $records->map(function ($item) {
+                // Batch-load FK → sync_id maps once per page (avoids N+1 on large pulls).
+                $fkLookups = [];
+                foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
+                    $ids = $records->pluck($foreignKey)->filter()->unique()->values();
+                    if ($ids->isEmpty()) {
+                        $fkLookups[$foreignKey] = [];
+
+                        continue;
+                    }
+                    $fkLookups[$foreignKey] = DB::table($refTable)
+                        ->whereIn('id', $ids->all())
+                        ->pluck('sync_id', 'id')
+                        ->all();
+                }
+
+                $mappedRecords = $records->map(function ($item) use ($fkLookups) {
                     $record = (array) $item;
                     foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
                         if (array_key_exists($foreignKey, $record) && $record[$foreignKey] !== null) {
-                            $refRecord = DB::table($refTable)->where('id', $record[$foreignKey])->first();
                             $syncKey = str_replace('_id', '_sync_id', $foreignKey);
-                            $record[$syncKey] = $refRecord ? $refRecord->sync_id : null;
+                            $record[$syncKey] = $fkLookups[$foreignKey][$record[$foreignKey]] ?? null;
                         }
                     }
 

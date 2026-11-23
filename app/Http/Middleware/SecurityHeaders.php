@@ -37,6 +37,16 @@ class SecurityHeaders
             );
         }
 
+        // Long-cache hashed/static public assets when served through PHP.
+        if ($request->isMethod('GET') && (
+            $request->is('assets/*')
+            || $request->is('build/assets/*')
+            || $request->is('favicon.ico')
+            || $request->is('icon.png')
+        )) {
+            $response->headers->set('Cache-Control', 'public, max-age=604800, immutable');
+        }
+
         return $response;
     }
 

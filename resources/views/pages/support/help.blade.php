@@ -14,26 +14,26 @@
                 <div class="space-y-4">
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 1) ? null : 1" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 1) ? null : 1" :aria-expanded="(active === 1).toString()" aria-controls="faq-panel-1" id="faq-trigger-1" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>How do I install the desktop app?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 1}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 1" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 1" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-1" role="region" aria-labelledby="faq-trigger-1">
                             You can download the desktop application for macOS or Windows from our <a href="/download" class="text-kipit-primary hover:underline font-medium">Download page</a>. Simply run the installer and follow the on-screen instructions. The first launch may take a moment as it sets up your local database.
                         </div>
                     </div>
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 10) ? null : 10" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 10) ? null : 10" :aria-expanded="(active === 10).toString()" aria-controls="faq-panel-10" id="faq-trigger-10" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>How do I update to a newer desktop version?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 10}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 10" x-collapse class="px-6 pb-4 text-gray-600 space-y-3">
+                        <div x-show="active === 10" x-collapse class="px-6 pb-4 text-gray-600 space-y-3" id="faq-panel-10" role="region" aria-labelledby="faq-trigger-10">
                             <p>Download the latest installer from the <a href="/download" class="text-kipit-primary hover:underline font-medium">Download page</a>, quit Kipit completely, then install over your current copy:</p>
                             <ul class="list-disc pl-5 space-y-1">
                                 <li><strong>macOS:</strong> Open the new <code>.dmg</code> and drag Kipit into Applications. Choose Replace when asked.</li>
@@ -45,13 +45,13 @@
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 2) ? null : 2" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 2) ? null : 2" :aria-expanded="(active === 2).toString()" aria-controls="faq-panel-2" id="faq-trigger-2" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>How do I register a new store?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 2}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 2" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 2" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-2" role="region" aria-labelledby="faq-trigger-2">
                             Click the "Register POS" button in the navigation bar to create a new central account. From there, you can create and manage multiple store locations (tenants) under one unified dashboard.
                         </div>
                     </div>
@@ -65,26 +65,26 @@
                 <div class="space-y-4">
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 3) ? null : 3" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 3) ? null : 3" :aria-expanded="(active === 3).toString()" aria-controls="faq-panel-3" id="faq-trigger-3" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>Are USB ESC/POS printers supported?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 3}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 3" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 3" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-3" role="region" aria-labelledby="faq-trigger-3">
                             Yes! Kipit supports direct ESC/POS printing via USB. You can configure your receipt printer directly within the POS interface settings without needing third-party drivers.
                         </div>
                     </div>
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 4) ? null : 4" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 4) ? null : 4" :aria-expanded="(active === 4).toString()" aria-controls="faq-panel-4" id="faq-trigger-4" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>Can I use a barcode scanner?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 4}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 4" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 4" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-4" role="region" aria-labelledby="faq-trigger-4">
                             Absolutely. Any standard USB or Bluetooth barcode scanner that acts as a keyboard emulator will work out of the box with Kipit. Just scan the item, and it adds directly to the cart.
                         </div>
                     </div>
@@ -98,52 +98,52 @@
                 <div class="space-y-4">
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 5) ? null : 5" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 5) ? null : 5" :aria-expanded="(active === 5).toString()" aria-controls="faq-panel-5" id="faq-trigger-5" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>What happens if my store loses internet connection?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 5}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 5" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 5" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-5" role="region" aria-labelledby="faq-trigger-5">
                             Because Kipit operates as a native application with a local database, you can continue to ring up sales and print receipts offline. Once internet is restored, the desktop app syncs changes with the cloud. If the same record was edited in two places, the newer change wins (last-write-wins).
                         </div>
                     </div>
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 6) ? null : 6" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 6) ? null : 6" :aria-expanded="(active === 6).toString()" aria-controls="faq-panel-6" id="faq-trigger-6" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>Is my data securely backed up?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 6}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 6" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 6" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-6" role="region" aria-labelledby="faq-trigger-6">
                             When online, your shop data syncs to the cloud. If a computer fails, you can install Kipit on a new machine, sign in, and pull down the synced store data. On desktop, the offline database is sealed when the app is closed (AES-256-GCM + OS secure storage). Enable BitLocker/FileVault, lock the OS account, and do not manually edit AppData. Details: <a href="/security" class="text-kipit-primary hover:underline font-medium">Security</a>.
                         </div>
                     </div>
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 7) ? null : 7" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 7) ? null : 7" :aria-expanded="(active === 7).toString()" aria-controls="faq-panel-7" id="faq-trigger-7" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>What if a POS device is lost or stolen?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 7}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 7" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 7" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-7" role="region" aria-labelledby="faq-trigger-7">
                             In Kipit POS (web), go to <strong>Settings → Connected Devices</strong>, revoke the lost device (or all desktop devices), and change that user’s password. Wipe or recover the hardware when possible. More detail: <a href="/security" class="text-kipit-primary hover:underline font-medium">Security</a>.
                         </div>
                     </div>
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 8) ? null : 8" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 8) ? null : 8" :aria-expanded="(active === 8).toString()" aria-controls="faq-panel-8" id="faq-trigger-8" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>What security steps must I take on each POS computer?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 8}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 8" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 8" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-8" role="region" aria-labelledby="faq-trigger-8">
                             <ol class="list-decimal pl-5 space-y-2">
                                 <li>Enable <strong>BitLocker</strong> (Windows) or <strong>FileVault</strong> (Mac) on the POS drive.</li>
                                 <li>Use a strong OS login password and lock the screen when unattended.</li>
@@ -157,13 +157,13 @@
 
                     <!-- FAQ Item -->
                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                        <button @click="active = (active === 9) ? null : 9" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus:outline-none hover:bg-gray-50 transition-colors">
+                        <button type="button" @click="active = (active === 9) ? null : 9" :aria-expanded="(active === 9).toString()" aria-controls="faq-panel-9" id="faq-trigger-9" class="w-full text-left px-6 py-4 font-semibold text-gray-900 flex justify-between items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kipit-primary hover:bg-gray-50 transition-colors">
                             <span>What happens if local desktop data is tampered with?</span>
                             <svg class="h-5 w-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': active === 9}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <div x-show="active === 9" x-collapse class="px-6 pb-4 text-gray-600">
+                        <div x-show="active === 9" x-collapse class="px-6 pb-4 text-gray-600" id="faq-panel-9" role="region" aria-labelledby="faq-trigger-9">
                             Kipit checks an integrity fingerprint over sales, inventory, and related tables. If the check fails, the app skips pushing those local changes and runs a mandatory <strong>cloud-wins repair</strong>: commercial data is rebuilt from the server so tampered offline rows cannot overwrite the cloud. Keep the machine online after an integrity warning so repair can finish. Before installing a desktop update, sync online first — upgrades refresh the fingerprint automatically and will not purge data just because the schema changed. Details: <a href="/security" class="text-kipit-primary hover:underline font-medium">Security</a>.
                         </div>
                     </div>
