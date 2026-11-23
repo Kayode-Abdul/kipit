@@ -13,6 +13,8 @@ return [
     |
     */
 
+    // Shared hosting: prefer "sync" (inline) unless you also cron
+    // `php artisan queue:work --stop-when-empty --max-time=50` every minute.
     'default' => env('QUEUE_CONNECTION', 'sync'),
 
     /*

@@ -35,4 +35,29 @@ return [
 
     'max_pull_batches_per_run' => (int) env('SYNC_MAX_PULL_BATCHES_PER_RUN', 100),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Integrity Verify Interval (minutes)
+    |--------------------------------------------------------------------------
+    |
+    | Full table fingerprints are expensive on large shops. On routine syncs,
+    | skip verify unless this many minutes have passed (cloud-wins always runs).
+    | Shared hosting / desktop both benefit — no Redis required.
+    |
+    */
+
+    'integrity_verify_minutes' => (int) env('SYNC_INTEGRITY_VERIFY_MINUTES', 60),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schedule Sync On Server
+    |--------------------------------------------------------------------------
+    |
+    | Desktop apps schedule sync locally. Keep false on shared hosting so
+    | central cron does not queue useless sync:run jobs without a worker.
+    |
+    */
+
+    'schedule_on_server' => (bool) env('SYNC_SCHEDULE_ON_SERVER', false),
+
 ];

@@ -40,9 +40,10 @@ class SyncController extends Controller
 
     public function push(Request $request)
     {
+        $started = microtime(true);
         $payload = $request->input('sync_data', []);
+        $rowCount = 0;
 
-        DB::beginTransaction();
         try {
             foreach ($payload as $tableName => $records) {
                 if (empty($records) || ! Schema::hasTable($tableName)) {
@@ -83,43 +84,55 @@ class SyncController extends Controller
                         ->all();
                 }
 
-                foreach ($records as $record) {
-                    unset($record['id']);
-                    if (Schema::hasColumn($tableName, 'is_synced')) {
-                        $record['is_synced'] = true;
-                    }
-
-                    foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
-                        $syncKey = str_replace('_id', '_sync_id', $foreignKey);
-                        if (array_key_exists($syncKey, $record)) {
-                            if ($record[$syncKey] !== null) {
-                                $record[$foreignKey] = $fkLookups[$syncKey][$record[$syncKey]] ?? null;
-                            } else {
-                                $record[$foreignKey] = null;
-                            }
-                            unset($record[$syncKey]);
+                DB::beginTransaction();
+                try {
+                    foreach ($records as $record) {
+                        unset($record['id']);
+                        if (Schema::hasColumn($tableName, 'is_synced')) {
+                            $record['is_synced'] = true;
                         }
-                    }
 
-                    $exists = $existingBySyncId[$record['sync_id']] ?? null;
-                    if ($exists) {
-                        if (isset($record['updated_at'], $exists->updated_at)) {
-                            if (strtotime($record['updated_at']) > strtotime($exists->updated_at)) {
+                        foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
+                            $syncKey = str_replace('_id', '_sync_id', $foreignKey);
+                            if (array_key_exists($syncKey, $record)) {
+                                if ($record[$syncKey] !== null) {
+                                    $record[$foreignKey] = $fkLookups[$syncKey][$record[$syncKey]] ?? null;
+                                } else {
+                                    $record[$foreignKey] = null;
+                                }
+                                unset($record[$syncKey]);
+                            }
+                        }
+
+                        $exists = $existingBySyncId[$record['sync_id']] ?? null;
+                        if ($exists) {
+                            if (isset($record['updated_at'], $exists->updated_at)) {
+                                if (strtotime($record['updated_at']) > strtotime($exists->updated_at)) {
+                                    DB::table($tableName)->where('sync_id', $record['sync_id'])->update($record);
+                                }
+                            } else {
                                 DB::table($tableName)->where('sync_id', $record['sync_id'])->update($record);
                             }
                         } else {
-                            DB::table($tableName)->where('sync_id', $record['sync_id'])->update($record);
+                            DB::table($tableName)->insert($record);
                         }
-                    } else {
-                        DB::table($tableName)->insert($record);
+                        $rowCount++;
                     }
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
                 }
             }
-            DB::commit();
+
+            Log::info('sync.push', [
+                'tenant' => tenant('id'),
+                'rows' => $rowCount,
+                'ms' => (int) ((microtime(true) - $started) * 1000),
+            ]);
 
             return response()->json(['status' => 'success']);
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Live Sync Push Error: '.$e->getMessage());
 
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
@@ -128,6 +141,7 @@ class SyncController extends Controller
 
     public function pull(Request $request)
     {
+        $started = microtime(true);
         $lastSyncTime = $request->input('last_sync_time', '2000-01-01 00:00:00');
         $limit = max(50, min((int) $request->input('limit', config('sync.batch_size', 500)), 2000));
         $cursor = $request->input('cursor');
@@ -234,6 +248,14 @@ class SyncController extends Controller
                 }
             }
         }
+
+        $rowCount = collect($pullData)->sum(fn ($rows) => is_countable($rows) ? count($rows) : 0);
+        Log::info('sync.pull', [
+            'tenant' => tenant('id'),
+            'rows' => $rowCount,
+            'has_more' => $hasMore,
+            'ms' => (int) ((microtime(true) - $started) * 1000),
+        ]);
 
         return response()->json([
             'status' => 'success',

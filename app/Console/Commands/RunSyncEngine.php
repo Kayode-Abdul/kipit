@@ -75,8 +75,15 @@ class RunSyncEngine extends Command
 
             $integrity = app(\App\Services\DatabaseIntegrityService::class);
             $preferCloud = $integrity->shouldPreferCloud();
-            if (! $preferCloud) {
+            $verifyMinutes = max(5, (int) config('sync.integrity_verify_minutes', 60));
+            $lastVerifiedAt = Cache::get('integrity_last_verified_at');
+            $shouldVerify = $preferCloud
+                || ! $lastVerifiedAt
+                || now()->diffInMinutes($lastVerifiedAt) >= $verifyMinutes;
+
+            if (! $preferCloud && $shouldVerify) {
                 $check = $integrity->verify();
+                Cache::put('integrity_last_verified_at', now(), 86400);
                 if (! $check['valid']) {
                     $preferCloud = true;
                     $integrity->markCloudWinsRepair();
@@ -86,17 +93,20 @@ class RunSyncEngine extends Command
                     Cache::put('last_successful_pull_time', '2000-01-01 00:00:00', 86400);
                     app(\App\Services\SyncDriftRepairService::class)->purgeBusinessTablesForRepair();
                 }
+            } elseif (! $preferCloud) {
+                $this->line("Skipped integrity full scan (next due within {$verifyMinutes}m).");
             } else {
                 $this->warn('Cloud-wins repair mode active — local push skipped.');
             }
 
+            $pushedAny = false;
             if (! $preferCloud) {
-                $this->pushLocalData($apiToken);
+                $pushedAny = $this->pushLocalData($apiToken);
             } else {
                 $this->warn('Skipped local push to prevent tampered offline data from overwriting the cloud.');
             }
 
-            $this->pullRemoteData($apiToken, $preferCloud);
+            $pulledAny = $this->pullRemoteData($apiToken, $preferCloud);
 
             // Role/permission rows may have changed; refresh Spatie cache for offline Gate checks.
             try {
@@ -111,15 +121,25 @@ class RunSyncEngine extends Command
                 if ($preferCloud && ! $pullStillPending) {
                     $integrity->refreshChecksum();
                     $integrity->clearCloudWinsRepair();
+                    Cache::put('integrity_last_verified_at', now(), 86400);
                     $this->info('Integrity checksum refreshed after cloud-wins pull.');
-                } elseif (! $preferCloud) {
+                } elseif (! $preferCloud && ($pushedAny || $pulledAny)) {
+                    // Refresh only when this cycle mutated data (avoids full fingerprint every minute).
                     $integrity->refreshChecksum();
-                } else {
+                    Cache::put('integrity_last_verified_at', now(), 86400);
+                } elseif ($preferCloud) {
                     $this->warn('Cloud-wins mode kept active until pull finishes (resume cursor pending).');
                 }
             } catch (\Throwable $e) {
                 Log::warning('Post-sync integrity refresh failed: '.$e->getMessage());
             }
+
+            Cache::put('sync_last_metrics', [
+                'at' => now()->toDateTimeString(),
+                'pushed' => $pushedAny,
+                'pulled' => $pulledAny,
+                'prefer_cloud' => $preferCloud,
+            ], 86400);
 
             $this->info('Sync Cycle Complete.');
 
@@ -130,7 +150,7 @@ class RunSyncEngine extends Command
         }
     }
 
-    protected function pushLocalData(string $apiToken): void
+    protected function pushLocalData(string $apiToken): bool
     {
         $this->info("Gathering local records for Push (batch size {$this->batchSize})...");
         $uploadDisk = config('filesystems.upload_disk', 'public');
@@ -207,12 +227,12 @@ class RunSyncEngine extends Command
                     } else {
                         $this->error("Live Server rejected push for {$tableName}: ".$response->body());
 
-                        return;
+                        return $pushedAny;
                     }
                 } catch (\Exception $e) {
                     $this->error("Failed to push {$tableName}: ".$e->getMessage());
 
-                    return;
+                    return $pushedAny;
                 }
             } while ($unsyncedRecords->count() === $this->batchSize);
         }
@@ -220,6 +240,8 @@ class RunSyncEngine extends Command
         if (! $pushedAny) {
             $this->line('No local changes to push.');
         }
+
+        return $pushedAny;
     }
 
     protected function pushProductImages(array $record, string $apiToken, string $uploadDisk): void
@@ -246,7 +268,7 @@ class RunSyncEngine extends Command
         }
     }
 
-    protected function pullRemoteData(string $apiToken, bool $forceCloudWins = false): void
+    protected function pullRemoteData(string $apiToken, bool $forceCloudWins = false): bool
     {
         $this->info('Requesting Pull from Live Server...');
         $lastSyncTime = Cache::get('last_successful_pull_time', '2000-01-01 00:00:00');
@@ -282,7 +304,7 @@ class RunSyncEngine extends Command
                 if (! ($response->successful() && $response->json('status') === 'success')) {
                     $this->error('Failed to pull data: '.$response->body());
 
-                    return;
+                    return $pulledAny;
                 }
 
                 $pullData = $response->json('sync_data', []);
@@ -316,60 +338,64 @@ class RunSyncEngine extends Command
                         ? "Pull complete. Horizon timestamp updated to {$latestServerTime}."
                         : 'No new remote changes to pull.');
 
-                    return;
+                    return $pulledAny;
                 }
 
                 if ($maxBatches > 0 && $batches >= $maxBatches) {
                     $this->warn("Reached max {$maxBatches} pull batches this run; will resume from cursor on next sync.");
 
-                    return;
+                    return $pulledAny;
                 }
             } while (true);
         } catch (\Exception $e) {
             $this->error('Failed to pull data from server: '.$e->getMessage());
         }
+
+        return $pulledAny;
     }
 
     protected function mergePulledData(array $pullData, bool $forceCloudWins = false): void
     {
         $uploadDisk = config('filesystems.upload_disk', 'public');
+        $pendingProductImages = [];
 
-        DB::beginTransaction();
-        try {
-            foreach ($pullData as $tableName => $records) {
-                $normalized = [];
-                foreach ($records as $recordData) {
-                    $normalized[] = (array) $recordData;
+        foreach ($pullData as $tableName => $records) {
+            $normalized = [];
+            foreach ($records as $recordData) {
+                $normalized[] = (array) $recordData;
+            }
+
+            // Batch-load sync_id → local id maps once per pulled table page.
+            $fkLookups = [];
+            foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
+                $syncKey = str_replace('_id', '_sync_id', $foreignKey);
+                $syncIds = collect($normalized)->pluck($syncKey)->filter()->unique()->values();
+                if ($syncIds->isEmpty() || ! Schema::hasTable($refTable)) {
+                    $fkLookups[$syncKey] = [];
+
+                    continue;
                 }
+                $fkLookups[$syncKey] = DB::table($refTable)
+                    ->whereIn('sync_id', $syncIds->all())
+                    ->pluck('id', 'sync_id')
+                    ->all();
+            }
 
-                // Batch-load sync_id → local id maps once per pulled table page.
-                $fkLookups = [];
-                foreach ($this->foreignKeyMapping as $foreignKey => $refTable) {
-                    $syncKey = str_replace('_id', '_sync_id', $foreignKey);
-                    $syncIds = collect($normalized)->pluck($syncKey)->filter()->unique()->values();
-                    if ($syncIds->isEmpty() || ! Schema::hasTable($refTable)) {
-                        $fkLookups[$syncKey] = [];
-
-                        continue;
-                    }
-                    $fkLookups[$syncKey] = DB::table($refTable)
-                        ->whereIn('sync_id', $syncIds->all())
-                        ->pluck('id', 'sync_id')
+            $existingBySyncId = [];
+            if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'sync_id')) {
+                $pageSyncIds = collect($normalized)->pluck('sync_id')->filter()->unique()->values();
+                if ($pageSyncIds->isNotEmpty()) {
+                    $existingBySyncId = DB::table($tableName)
+                        ->whereIn('sync_id', $pageSyncIds->all())
+                        ->get()
+                        ->keyBy('sync_id')
                         ->all();
                 }
+            }
 
-                $existingBySyncId = [];
-                if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'sync_id')) {
-                    $pageSyncIds = collect($normalized)->pluck('sync_id')->filter()->unique()->values();
-                    if ($pageSyncIds->isNotEmpty()) {
-                        $existingBySyncId = DB::table($tableName)
-                            ->whereIn('sync_id', $pageSyncIds->all())
-                            ->get()
-                            ->keyBy('sync_id')
-                            ->all();
-                    }
-                }
-
+            // Per-table transaction keeps locks short on shared hosts / SQLite.
+            DB::beginTransaction();
+            try {
                 foreach ($normalized as $recordData) {
                     if ($tableName === 'settings' && ! empty($recordData['key'])) {
                         \App\Models\Tenants\Setting::set($recordData['key'], $recordData['value'] ?? null);
@@ -459,14 +485,21 @@ class RunSyncEngine extends Command
                     }
 
                     if ($tableName === 'products' && ! empty($recordData['hero_images'])) {
-                        $this->pullProductImages($recordData, $uploadDisk);
+                        $pendingProductImages[] = $recordData;
                     }
                 }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $this->error("Failed to merge pulled {$tableName}: ".$e->getMessage());
+
+                return;
             }
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->error('Failed to merge pulled data: '.$e->getMessage());
+        }
+
+        // Media HTTP outside DB transactions (shared-host / SQLite friendly).
+        foreach ($pendingProductImages as $recordData) {
+            $this->pullProductImages($recordData, $uploadDisk);
         }
     }
 
