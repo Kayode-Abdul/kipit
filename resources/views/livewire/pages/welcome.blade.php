@@ -232,7 +232,7 @@ $subscribe = function () {
           </div>
           <div class="w-full flex items-end max-w-md h-auto relative">
 
-            <img src="{{ asset('assets/images/product-management.png') }}" class="relative h-[40rem] lg:left-20" width="640" height="640" alt="Kipit POS product management screen" decoding="async" fetchpriority="high">
+            <img src="{{ asset('assets/images/product-management.png') }}" class="relative h-[40rem] w-auto max-w-full object-contain lg:left-20" width="658" height="1382" alt="Kipit POS product management screen" decoding="async" fetchpriority="high">
           </div>
         </div>
       </div>

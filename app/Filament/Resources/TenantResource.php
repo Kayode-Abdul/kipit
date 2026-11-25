@@ -21,10 +21,20 @@ class TenantResource extends Resource
         return $admin?->isAdmin() ?? false;
     }
 
+    public static function canView($record): bool
+    {
+        return static::canViewAny();
+    }
+
     protected static ?string $model = Tenant::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+
     protected static ?string $navigationLabel = 'Shops (Tenants)';
+
+    protected static ?string $modelLabel = 'Shop';
+
+    protected static ?string $pluralModelLabel = 'Shops';
 
     public static function form(Form $form): Form
     {
@@ -72,31 +82,45 @@ class TenantResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('Store Prefix')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Shop Name')
                     ->placeholder('—')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('tenancy_email')
                     ->label('Owner Email')
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable(),
+                Tables\Columns\TextColumn::make('domains.domain')
+                    ->label('Domain')
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('business_type')
                     ->label('Business')
                     ->placeholder('—')
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->getStateUsing(fn (Tenant $record): string => $record->isActive() ? 'Active' : 'Inactive')
+                    ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'danger'),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Date joined')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -112,6 +136,7 @@ class TenantResource extends Resource
         return [
             'index' => Pages\ListTenants::route('/'),
             'create' => Pages\CreateTenant::route('/create'),
+            'view' => Pages\ViewTenant::route('/{record}'),
             'edit' => Pages\EditTenant::route('/{record}/edit'),
         ];
     }
